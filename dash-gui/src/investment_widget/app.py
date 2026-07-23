@@ -73,14 +73,14 @@ class Application:
         self._fetch_summary_worker = FetchSummaryWorker(ApiClient(self._config.endpoint_url))
         self._fetch_summary_worker.succeeded.connect(self._on_summary)
         self._fetch_summary_worker.failed.connect(self._on_error)
-        self._fetch_summary_worker.finished.connect(self._fetch_summary_worker.deleteLater)
+        # self._fetch_summary_worker.finished.connect(self._fetch_summary_worker.deleteLater)
         
         # Start the ingest server in a separate thread to handle incoming summary updates
         self._ingest_server = IngestServerThread()
         self._ingest_server.summaryReady.connect(self._on_summary)
 
         self._ingest_server.start()
-        self._fetch_summary_worker.start()
+        # self._fetch_summary_worker.start()
         
         exit_code = self._qt_app.exec()
         logger.info("Qt event loop exited with code {}", exit_code)
