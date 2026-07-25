@@ -40,7 +40,7 @@ class ScheduledTask(BaseModel):
         return self._status
     
     @property
-    def callback_task(self) -> Optional[str]:
+    def callback_task(self) -> Optional[Task]:
         return self.callback
 
     @status.setter

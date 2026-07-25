@@ -1,6 +1,6 @@
 import threading
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Dict, List
 
 from loguru import logger
 from pydantic import BaseModel, PrivateAttr
@@ -12,30 +12,30 @@ from .scheduledTask import ScheduledTask
 
 class TaskExecutionObserver(ABC, BaseModel):
     @abstractmethod
-    def on_task_started(self, task: ScheduledTask) -> None:
+    def on_task_started(self, started: ScheduledTask) -> None:
         pass
 
     @abstractmethod
-    def on_task_completed(self, task: ScheduledTask) -> None:
+    def on_task_completed(self, completed: ScheduledTask) -> None:
         pass
 
     @abstractmethod
-    def on_task_failed(self, task: ScheduledTask, exception: Exception) -> None:
+    def on_task_failed(self, failed: ScheduledTask, exception: Exception) -> None:
         pass
 
 
 class LoggingObserver(TaskExecutionObserver):
-    def on_task_started(self, task: ScheduledTask) -> None:
+    def on_task_started(self, started: ScheduledTask) -> None:
         thread_name = threading.current_thread().name
-        logger.info("[{}] Task '{}' started", thread_name, task.task.get_name())
+        logger.info("[{}] Task '{}' started", thread_name, started.task.get_name())
 
-    def on_task_completed(self, task: ScheduledTask) -> None:
+    def on_task_completed(self, completed: ScheduledTask) -> None:
         thread_name = threading.current_thread().name
-        logger.success("[{}] Task '{}' completed successfully", thread_name, task.task.get_name())
+        logger.success("[{}] Task '{}' completed successfully", thread_name, completed.task.get_name())
 
-    def on_task_failed(self, task: ScheduledTask, exception: Exception) -> None:
+    def on_task_failed(self, failed: ScheduledTask, exception: Exception) -> None:
         thread_name = threading.current_thread().name
-        logger.error("[{}] Task '{}' failed", thread_name, task.task.get_name())
+        logger.error("[{}] Task '{}' failed", thread_name, failed.task.get_name())
         logger.exception(exception)
 
 
@@ -51,20 +51,29 @@ class DataObserver(TaskExecutionObserver):
         else:
             raise TypeError("Data observer couldn't be instantiated. Must provide a valid store client")
 
-    def on_task_started(self, task: ScheduledTask) -> None:
+    def on_task_started(self, started: ScheduledTask) -> None:
+        # Potential add a health check on gui to ensure responsiveness of the app and that the store is available
         pass
 
-    def on_task_completed(self, task: ScheduledTask) -> None:
+    def on_task_completed(self, completed: ScheduledTask) -> None:
         # Route to the correct UI update callback based on the task's name
-        if task.task.get_name() == TaskConfigs['FETCH_SUMMARY'].name:
-            investment_data: List[tuple] = task.task.data
+        task = completed.task
+        if task.get_name() == TaskConfigs['FETCH_SUMMARY'].name:
+            investment_data = task.data
+            if not investment_data or investment_data is None:
+                logger.warning(
+                    "No investment data returned from task '{}'... Skipping store update", task.get_name()
+                )
+                return
             try:
                 self._store.update(investment_data, 'investments')
                 logger.info("Investment data updated successfully in the store")
             except Exception as e:
                 logger.error("Failed updating store: {}", e)
                 raise
-    def on_task_failed(self, task: ScheduledTask, exception: Exception) -> None:
+
+    def on_task_failed(self, failed: ScheduledTask, exception: Exception) -> None:
         # Prompt bridge to show stale data warning if the task fails
-        if task.task.get_name() == TaskConfigs['FETCH_SUMMARY'].name:
-            logger.info("unable to fetch investment summary, current store state unchanged")
+        task_name = failed.task.get_name()
+        if task_name == TaskConfigs['FETCH_SUMMARY'].name:
+            logger.info(f"'{task_name}' couldn't fetch investment summary, current store state unchanged")

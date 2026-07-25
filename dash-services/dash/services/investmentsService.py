@@ -43,6 +43,7 @@ class InvestmentsService:
 
         return None
 
+
     def push_summary_to_gui(self, summary_data: Dict) -> bool:
         url = f"{URLs['DASH_GUI'].base_url}{URLs['DASH_GUI'].endpoints.push_summary}"
         try:

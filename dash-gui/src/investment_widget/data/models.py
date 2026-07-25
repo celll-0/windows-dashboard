@@ -4,7 +4,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
-
 @dataclass(frozen=True)
 class AccountSummary:
     current_value: float
@@ -23,13 +22,13 @@ class AccountSummary:
     def from_dict(cls, data: dict) -> "AccountSummary":
         """Parse the endpoint payload. Values are plain numbers (no symbols)."""
         inv = data["investments"]
+
         return cls(
-            current_value=float(inv["Current Value"]),
-            realized_pl=float(inv["Realized P/L"]),
-            total_cost=float(inv["Total Cost"]),
-            unrealized_pl=float(inv["Unrealized P/L"]),
-            total_value=float(inv["Total Value"]),
-            free_cash=float(inv["Free Cash"]),
+            current_value=float(inv["currentValue"]),
+            realized_pl=float(inv["realizedProfitLoss"]),
+            total_cost=float(inv["totalCost"]),
+            unrealized_pl=float(inv["unrealizedProfitLoss"]),
+            total_value=float(inv["totalValue"]),
+            free_cash=float(inv["availableToTrade"]),
             timestamp=datetime.fromisoformat(data["timestamp"]),
         )
-

@@ -1,3 +1,4 @@
+from io import TextIOWrapper
 import json
 import threading
 
@@ -12,7 +13,7 @@ from ..constants import TIMEZONE
 
 class JsonPersistenceClient:
     # currently a path to a temp json string
-    _store_db: str | Path
+    _store_db: Path
     # prevent multiple threads accessing the store at the same time
     _store_lock = threading.Lock()
 
@@ -26,44 +27,48 @@ class JsonPersistenceClient:
         self._store_db = store_path
         logger.info("Initialized local store client: {}", self._store_db)
 
-    def update(self, fields: List[tuple], table_name: str) -> None:
+    def update(self, data: Dict[str, Any], table_name: str) -> None:
         with self._store_lock:
             if not self._is_empty_store():
                 with open(self._store_db, 'r+') as sf:
-                    store = json.load(sf)
-
-                    if store.get(table_name) is not None:
-                        # ensure the table exists in the store, then unpack and update fields.
-                        # Raise exception if check fails on invalid table name
-                        store = self._populate_fields_from_tuples(store, fields, table_name)
+                    store: Dict[str, Any] = json.load(sf)#
+                    # ensure the table exists in the store, then unpack and update fields.
+                    # Raise exception if check fails on invalid table name
+                    if (
+                        store.get(table_name)
+                        and store.get(table_name) is not None
+                    ):
+                        store[table_name] = data
+                        self._json_dump_into_store(store, sf, table_name, sf.tell())
                     else:
                         raise RuntimeError(
                             "Persistence Error - Table does not exist in store. Check for invalid table name or json store is set up correctly"
                         )
-
-                    # Write complete json update object to file
-                    if store is not None:
-                        sf.seek(0)
-                        sf.truncate()
-                        json.dump(store, sf)
             else:
-                # Create the store object, and populate with 'fields' if json file does not already exists
-                store = dict()
+                # Create the store object if json file does not already exist
                 if table_name in ['investments']:
-                    # ensure the table exists in the store, then unpack and update fields.
-                    # Raise exception if check fails on invalid table name
-                    store[table_name] = dict()
-                    store = self._populate_fields_from_tuples(store, fields, table_name)
-                else:
-                    raise RuntimeError(
-                        "Persistence Error - Table does not exist in store. Check for invalid table name or json store is set up correctly"
-                    )
-                # Write fresh store json object
-                with open(self._store_db, 'w+') as sf:
-                    if store is not None:
-                        sf.seek(0)
-                        sf.truncate(0)
-                        json.dump(store, sf)
+                    store = dict()
+                    store[table_name] = data
+                    with open(self._store_db, 'w+') as sf:
+                        self._json_dump_into_store(store, sf, table_name, 0)
+
+
+    def _json_dump_into_store(self,
+        store: Dict[str, Any],
+        store_file: TextIOWrapper,
+        updated_table: str,
+        trunc_pos: int | None
+    ) -> None:
+        # requires store to be a non-empty dict, otherwise raises ValueError
+        if not store:
+            raise ValueError("Cannot dump empty store into file")
+        # add the timestamp for the updated table to the store before dumping to file
+        store[f'{updated_table}_timestamp'] = datetime.now(ZoneInfo(TIMEZONE)).isoformat()
+
+        store_file.seek(0)
+        store_file.truncate(trunc_pos)
+        json.dump(store, store_file)
+
 
     def _populate_fields_from_tuples(
         self, store: Dict[str, Any], fields: List[tuple], table: str
@@ -72,24 +77,31 @@ class JsonPersistenceClient:
             return None
         for field, value in fields:
             store[table][field] = value if value is not None else store[table][field]
-            store[f'{table}_timestamp'] = datetime.now(ZoneInfo(TIMEZONE)).isoformat()
+        store[f'{table}_timestamp'] = datetime.now(ZoneInfo(TIMEZONE)).isoformat()
         return store
 
-    def get_from_table(self, table_name: str) -> Dict[str, Any]:
+
+
+    def get_from_table(self, table_name: str) -> tuple[str, Dict[str, Any]]:
         with self._store_lock:
-            if not self._is_empty_store():
-                with open(self._store_db, 'r') as sf:
-                    store = json.load(sf)
-                    # check that the table exists in the store if so return.
-                    # If not throw an error
-                    table_data = store.get(table_name)
-                    if table_data is not None:
-                        ts = store.get(f'{table_name}_timestamp')
-                        return ts, table_data
-                    else:
-                        raise RuntimeError(
-                            "Persistence Error - Table does not exist in store. Check for invalid table name or json store is set up correctly"
-                        )
+            if self._is_empty_store():
+                raise RuntimeError(
+                    "Persistence Error - Store is empty. Check that the store is set up correctly"
+                )
+            
+            with open(self._store_db, 'r') as sf:
+                store = json.load(sf)
+                # check that the table exists in the store if so return.
+                # If not throw an error
+                data = store.get(table_name)
+                if data and data is not None:
+                    ts = store.get(f'{table_name}_timestamp')
+                    return ts, data
+                else:
+                    raise RuntimeError(
+                        "Persistence Error - Table does not exist in store. Check for invalid table name or json store is set up correctly"
+                    )
+
 
     def _is_empty_store(self) -> bool:
         if self._store_db.is_file() and self._store_db.stat().st_size > 0:
