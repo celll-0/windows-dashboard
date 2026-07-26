@@ -18,6 +18,7 @@ else:
     ROOT_DIR = PROJECT_ROOT
 
 LOGGING_CONFIG_PATH = ROOT_DIR / "logging.yml"
+LOG_DIR = ROOT_DIR / "logs"
 CONFIG_PATH = PROJECT_ROOT / "config.yml"
 DB_PATH = PROJECT_ROOT / "snapshots.db"
 UI_DIR = PACKAGE_DIR / "ui"

@@ -1,0 +1,73 @@
+#!/bin/sh
+# scripts/git-hooks/pre-push
+#
+# Rebuilds Kel-dash.exe before allowing a push to refs/heads/master, but only
+# when the pushed commits actually touch dash-gui/ -- and a dash-gui/README
+# change alone doesn't count. Aborts the push (non-zero exit) if the build
+# fails.
+#
+# Activated once per clone via:
+#   git config core.hooksPath scripts/git-hooks
+#
+# Note: setting core.hooksPath makes Git stop looking in .git/hooks/ for
+# ANY hook type, not just pre-push -- keep that in mind if another hook is
+# added later.
+
+z40=0000000000000000000000000000000000000000
+empty_tree=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+master_pushed=0
+gui_changed=0
+
+# stdin: "<local ref> <local sha1> <remote ref> <remote sha1>" per ref pushed
+while read -r local_ref local_sha remote_ref remote_sha; do
+    if [ "$remote_ref" = "refs/heads/master" ] || [ "$local_ref" = "refs/heads/master" ]; then
+        # Skip pure deletions (local_sha is all zeros)
+        if [ "$local_sha" != "$z40" ]; then
+            master_pushed=1
+
+            # New ref on the remote (first push of master): diff against the
+            # empty tree since there's no prior remote_sha to compare from.
+            if [ "$remote_sha" = "$z40" ]; then
+                base="$empty_tree"
+            else
+                base="$remote_sha"
+            fi
+
+            changed=$(git diff --name-only --diff-filter=ACMR "$base" "$local_sha" -- dash-gui)
+            non_readme=$(printf '%s\n' "$changed" | grep -viE '(^|/)readme(\.[a-z0-9]+)?$')
+
+            if [ -n "$non_readme" ]; then
+                gui_changed=1
+            fi
+        fi
+    fi
+done
+
+if [ "$master_pushed" -ne 1 ]; then
+    # No update to master in this push -- nothing to build, allow it through.
+    exit 0
+fi
+
+if [ "$gui_changed" -ne 1 ]; then
+    # master updated, but no dash-gui changes (or dash-gui README-only) -- skip the rebuild.
+    echo "pre-push: no non-README dash-gui changes -- skipping Kel-dash.exe rebuild."
+    exit 0
+fi
+
+repo_root=$(git rev-parse --show-toplevel) || exit 1
+
+echo "pre-push: dash-gui changes detected on master -- rebuilding Kel-dash.exe first..."
+
+(
+    cd "$repo_root" || exit 1
+    powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "scripts/build-gui-exe.ps1"
+)
+build_status=$?
+
+if [ "$build_status" -ne 0 ]; then
+    echo "pre-push: Kel-dash.exe build FAILED (exit $build_status) -- push aborted." >&2
+    exit 1
+fi
+
+echo "pre-push: build succeeded -- continuing push."
+exit 0
