@@ -8,6 +8,7 @@
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 
@@ -75,8 +76,17 @@ class Application:
 
     def _on_restart_requested(self) -> None:
         logger.info("Restart requested via control API — relaunching")
+        env = os.environ.copy()
+        if getattr(sys, "frozen", False):
+            # Force production path resolution regardless of what this
+            # process's own environment happened to inherit (e.g. a stray
+            # ENV=development from .env if launched via `kel-dash start`) --
+            # a frozen relaunch must never resolve paths as if it were a dev
+            # checkout. See ROOT_DIR in paths.py.
+            env["ENV"] = "production"
         subprocess.Popen(
             [sys.executable, *sys.argv],
+            env=env,
             creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
             close_fds=True,
         )
