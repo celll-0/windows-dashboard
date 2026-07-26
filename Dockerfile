@@ -23,7 +23,6 @@ COPY --chown=app:app dash-services/main.py ./main.py
 RUN poetry install --only services,shared
 
 COPY --chown=app:app logging.yml ./
-COPY --chown=app:app stop-services.sh ./
 COPY --chown=app:app utils/ ./utils/
 
 CMD ["poetry", "run", "python", "main.py"]
