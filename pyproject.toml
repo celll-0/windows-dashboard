@@ -40,3 +40,7 @@ requests = ">=2.34.2,<3.0.0"
 
 [tool.poetry.group.services-dev.dependencies]
 psutil = ">=6.0.0"
+
+# ── dash-cli ─────────────────────────────────────────────────────────────────
+[tool.poetry.group.cli.dependencies]
+requests = ">=2.32.0,<3.0.0"

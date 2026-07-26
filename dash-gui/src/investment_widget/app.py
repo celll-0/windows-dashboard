@@ -8,8 +8,10 @@
 """
 from __future__ import annotations
 
+import subprocess
 import sys
 
+import cherrypy
 from loguru import logger
 from PyQt6.QtCore import QUrl, QObject
 from PyQt6.QtGui import QGuiApplication
@@ -66,22 +68,43 @@ class Application:
         logger.error("Event failed: {}", message)
         self._bridge.show_error(message)
 
+    def _on_stop_requested(self) -> None:
+        logger.info("Stop requested via control API")
+        cherrypy.engine.exit()
+        self._qt_app.quit()
+
+    def _on_restart_requested(self) -> None:
+        logger.info("Restart requested via control API — relaunching")
+        subprocess.Popen(
+            [sys.executable, *sys.argv],
+            creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+            close_fds=True,
+        )
+        self._on_stop_requested()
+
+    def _on_refresh_requested(self) -> None:
+        logger.info("Refresh requested via control API")
+        worker = FetchSummaryWorker(ApiClient(self._config.endpoint_url))
+        worker.succeeded.connect(self._on_summary)
+        worker.failed.connect(self._on_error)
+        worker.finished.connect(worker.deleteLater)
+        worker.start()
+        self._refresh_worker = worker  # keep a reference so it isn't GC'd mid-run
+
     def run(self) -> int:
         logger.info("Entering Qt event loop")
-        
-        # Fetch immediately on launch
-        self._fetch_summary_worker = FetchSummaryWorker(ApiClient(self._config.endpoint_url))
-        self._fetch_summary_worker.succeeded.connect(self._on_summary)
-        self._fetch_summary_worker.failed.connect(self._on_error)
-        # self._fetch_summary_worker.finished.connect(self._fetch_summary_worker.deleteLater)
-        
-        # Start the ingest server in a separate thread to handle incoming summary updates
-        self._ingest_server = IngestServerThread()
+
+        # Start the ingest/control server in a separate thread. Data refresh
+        # is manual-only (triggered via the control API's `refresh`, see
+        # `_on_refresh_requested`) -- no fetch happens automatically here.
+        self._ingest_server = IngestServerThread(self._store)
         self._ingest_server.summaryReady.connect(self._on_summary)
+        self._ingest_server.stopRequested.connect(self._on_stop_requested)
+        self._ingest_server.restartRequested.connect(self._on_restart_requested)
+        self._ingest_server.refreshRequested.connect(self._on_refresh_requested)
 
         self._ingest_server.start()
-        # self._fetch_summary_worker.start()
-        
+
         exit_code = self._qt_app.exec()
         logger.info("Qt event loop exited with code {}", exit_code)
         return exit_code

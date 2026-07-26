@@ -3,7 +3,9 @@ import cherrypy
 import threading
 from typing import Dict
 
+from .data import SnapshotStore
 from .data.models import AccountSummary
+from .control import ControlServer
 
 from PyQt6.QtCore import QThread, pyqtSignal, QObject
 from loguru import logger
@@ -28,22 +30,32 @@ class IngestServer(QObject):
 
 class IngestServerThread(QThread):
     summaryReady = pyqtSignal(object)  # AccountSummary
+    stopRequested = pyqtSignal()
+    restartRequested = pyqtSignal()
+    refreshRequested = pyqtSignal()
 
-    def __init__(self, ) -> None:
+    def __init__(self, store: SnapshotStore) -> None:
         super().__init__()
         self.setObjectName("ingest_server_thread")
         self._server = IngestServer()
         self._server.summaryRequestSucceeded.connect(self.summaryReady)
+        self._control = ControlServer(store)
+        self._control.stopRequested.connect(self.stopRequested)
+        self._control.restartRequested.connect(self.restartRequested)
+        self._control.refreshRequested.connect(self.refreshRequested)
 
     def run(self) -> None:
-        """Run the ingest server for income summary push updates"""
+        """Run the ingest + control servers on one shared CherryPy engine."""
         threading.current_thread().name = QThread.currentThread().objectName()
-        cherrypy.quickstart(
-            self._server,
-            "/ingest",
-            {
-                'global': {'server.socket_host': '0.0.0.0', 'server.socket_port': int(os.getenv("GUI_PORT")), 'server.socket_timeout': 3},
-                "/": {},
+        cherrypy.tree.mount(self._server, "/ingest", {"/": {}})
+        cherrypy.tree.mount(self._control, "/control", {"/": {}})
+        cherrypy.config.update({
+            "global": {
+                "server.socket_host": "0.0.0.0",
+                "server.socket_port": int(os.getenv("GUI_PORT")),
+                "server.socket_timeout": 3,
             },
-        )
-        logger.info(f"Ingest server thread started")
+        })
+        cherrypy.engine.start()
+        logger.info("Ingest/control server thread started")
+        cherrypy.engine.block()

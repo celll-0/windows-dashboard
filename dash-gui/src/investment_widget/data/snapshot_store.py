@@ -55,6 +55,18 @@ class SnapshotStore:
         conn.execute("DELETE FROM snapshots WHERE ts < ?", (cutoff,))
         logger.debug("Removed snapshots older than {} hours", SNAPSHOT_RETENTION_HOURS)
 
+    def list_snapshots(self, since: datetime | None = None) -> list[dict]:
+        """All snapshots, oldest first, optionally restricted to `ts >= since`."""
+        query = "SELECT ts, total_value FROM snapshots"
+        params: tuple = ()
+        if since is not None:
+            query += " WHERE ts >= ?"
+            params = (since.isoformat(),)
+        query += " ORDER BY ts"
+        with self._connect() as conn:
+            rows = conn.execute(query, params).fetchall()
+        return [{"ts": ts, "total_value": total_value} for ts, total_value in rows]
+
     def value_near_24h_ago(self) -> float | None:
         """Total value of the snapshot closest to 24h ago, or None if empty."""
         target = (datetime.now(tz=ZoneInfo(self.timezone)) - timedelta(hours=24)).isoformat()
