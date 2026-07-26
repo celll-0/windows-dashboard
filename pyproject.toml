@@ -44,3 +44,7 @@ psutil = ">=6.0.0"
 # ── dash-cli ─────────────────────────────────────────────────────────────────
 [tool.poetry.group.cli.dependencies]
 requests = ">=2.32.0,<3.0.0"
+
+# ── windows exe build ─────────────────────────────────────────────────────────
+[tool.poetry.group.build-windows.dependencies]
+pyinstaller = { version = ">=6.11.0,<7.0.0", python = ">=3.12,<3.15", markers = "sys_platform == 'win32'" }
