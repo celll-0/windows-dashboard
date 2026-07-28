@@ -1,16 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
-
-from loguru import logger
+from typing import Any, Dict, Optional
 from pydantic import BaseModel, PrivateAttr
-
-from ..config import TaskConfigs
-from ..services.investmentsService import InvestmentsService
-from ..services.persistenceClient import JsonPersistenceClient
 
 
 class Task(ABC, BaseModel):
+    _caller: Optional["Task"] = PrivateAttr(default=None)
     _data: Optional[Dict[str, Any]] = PrivateAttr(default={})
+    _data_task: bool = PrivateAttr(default=False)
+    _store_in: Optional[str] = PrivateAttr(default=None)
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -29,50 +26,27 @@ class Task(ABC, BaseModel):
         """Return the data produced by the task after execution."""
         return self._data
 
+    @property
+    def is_data_task(self) -> bool:
+        """Indicates whether the task produces data to be stored."""
+        return self._data_task
 
-class FetchSummaryTask(Task):
-    investmentsService: InvestmentsService
-    _name: str = PrivateAttr(default_factory=lambda: TaskConfigs["FETCH_SUMMARY"].name)
+    @property
+    def store_table_name(self) -> Optional[str]:
+        """Return the name of the store table where the data will be stored."""
+        return self._store_in.split(".")[0] if self._store_in else None
 
-    def get_name(self) -> str:
-        return self._name
+    @property
+    def store_key(self) -> Optional[str]:
+        """Return the key under which the data will be stored in the store table."""
+        return self._store_in.split(".")[-1] if self._store_in else None
 
-    def execute(self) -> None:
-        """Get the latest summary data from the investments service."""
-        try:
-            summary_data = self.investmentsService.get_summary()
-            if summary_data and summary_data is not None:
-                # Extract the nested investments object; default to empty dict if missing
-                self._data = {
-                    **summary_data.get("investments", {}),
-                    **summary_data.get("cash", {}),
-                    "totalValue": summary_data.get("totalValue"),
-                }
-
-        except Exception as e:
-            raise e
+    @property
+    def caller(self) -> Optional["Task"]:
+        """Return the caller task that triggered this task, if any."""
+        return self._caller
     
-class UpdateGuiSummaryTask(Task):
-    store: JsonPersistenceClient
-    investmentsService: InvestmentsService
-    _name: str = PrivateAttr(default_factory=lambda: TaskConfigs["UPDATE_GUI_SUMMARY"].name)
-
-    def get_name(self) -> str:
-        return self._name
-
-    def execute(self) -> None:
-        """Get the latest summary data from the store and push it to the widget."""
-        ts, investment_data = self.store.get_from_table('investments')
-        # Construct a summary dict to send to the widget.
-        summary = {
-            "timestamp": ts,
-            "investments": investment_data
-        }
-        # only push to the GUI if all values are present and not None
-        if all(summary.values()):
-            success = self.investmentsService.push_summary_to_gui(summary)
-            if success:
-                logger.success("Gui summary updated to latest!")
-            else:
-                raise RuntimeError("Failed to push summary to gui.")
-
+    def set_caller(self, caller: "Task") -> "Task":
+        """Set the caller task for this task."""
+        self._caller = caller
+        return self

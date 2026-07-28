@@ -17,4 +17,12 @@ CALLBACK_DELAY = 10
 
 TIMEZONE = 'Europe/London' 
 
+ACTIVE_TASKS = (
+    "FETCH_SUMMARY",
+    "FETCH_PORTFOLIO_POSITIONS",
+)
 
+STORE_TABLES = [
+    "investments",
+    "news"
+]

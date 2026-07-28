@@ -4,12 +4,10 @@ import signal
 import sys
 import threading
 from pathlib import Path
+from typing import Any, Dict
 
 # Make shared project-root packages (e.g. utils) importable.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from datetime import time
-from os import mkdir, getenv
 
 import cherrypy
 from loguru import logger
@@ -19,18 +17,22 @@ if Path(__file__).resolve().parent.parent.joinpath(".env").exists():
     load_dotenv()
 
 from dash.config import TaskConfigs
-from dash.paths import DB_PATH, LOGGING_CONFIG_PATH
+from dash.paths import LOGGING_CONFIG_PATH
+from dash.constants import ACTIVE_TASKS
 from dash.scheduling import (
+    Task,
     DataObserver,
-    FetchSummaryTask,
-    UpdateGuiSummaryTask,
     LoggingObserver,
     OneTimeSchedulingStrategy,
     RecurringSchedulingStrategy,
     RecurringTimeSchedulingStrategy,
 )
+from dash.tasks import (
+    FetchSummaryTask,
+    PushToWidgetTask,
+    FetchPortfolioPositionsTask,
+)
 from dash.server import run_server
-from dash.services import InvestmentsService, JsonPersistenceClient
 from dash.services.schedulingService import TaskSchedulerService
 
 from logging_conf import load_logging_config
@@ -41,9 +43,10 @@ _STRATEGY_BUILDERS = {
     "one_time": lambda s: OneTimeSchedulingStrategy(execution_time=s.execution_time),
 }
 
-_TASK_MAP = {
+_TASK_HANDLER_MAP: dict[str, type[Task]] = {
     "fetch_investment_summary": FetchSummaryTask,
-    "update_gui_summary": UpdateGuiSummaryTask,
+    "push_to_widget": PushToWidgetTask,
+    "fetch_portfolio_positions": FetchPortfolioPositionsTask,
 }
 
 def main():
@@ -53,27 +56,37 @@ def main():
 
     scheduler: TaskSchedulerService = TaskSchedulerService.getInstance()
     scheduler.initialize(worker_count=2)
-    investmentsService = InvestmentsService()
 
-    jsonStore = JsonPersistenceClient(store_path=DB_PATH)
+    for task_name in ACTIVE_TASKS:
+        task_config = TaskConfigs[task_name]
+        # only set up task if it has registered schedules
+        if task_config.schedules:
+            task_handler = _TASK_HANDLER_MAP.get(task_config.name)
+            opts: Dict[str, Any] = {}
+            if task_handler is None:
+                logger.warning(f"No task handler found for {task_config.name}. Skipping scheduling.")
+                continue
 
-    config = TaskConfigs["FETCH_SUMMARY"]
-    if config.schedules:
-        for sched in config.schedules:
-            scheduler.schedule(
-                task=FetchSummaryTask(investmentsService=investmentsService),
-                strategy=_STRATEGY_BUILDERS[sched.type](sched),
-                callback=_TASK_MAP[config.callback](store=jsonStore, investmentsService=investmentsService),
-            )
-    else:
-        logger.warning(
-            "No schedules configured for task '{}'. Add entries to TaskConfigs.",
-            config.name,
-        )
+            task = task_handler()
+            if task_config.callback and task_config.callback in _TASK_HANDLER_MAP:
+                callback_handler = _TASK_HANDLER_MAP.get(task_config.callback)
+                if callback_handler is not None:
+                    callback = callback_handler()
+                    opts["callback"] = callback.set_caller(task) if task.is_data_task else callback  # Set the caller for the callback task
+                else:
+                    logger.warning(f"No callback handler found for {task_config.callback}.")
+            else:
+                logger.warning(f"No callback registered for task {task_config.name}.")
+
+            for sched in task_config.schedules:
+                opts["strategy"] = _STRATEGY_BUILDERS[sched.type](sched)
+                scheduler.schedule(task, **opts)
+        else:
+            logger.warning(f"No schedules defined for task {task_config.name}. Please add via config.py.")
 
     scheduler.addObserver(LoggingObserver())
     # Pass persistance client as store object param
-    scheduler.addObserver(DataObserver(jsonStore))
+    scheduler.addObserver(DataObserver())
 
     shutdown_event = threading.Event()
 
@@ -92,7 +105,6 @@ def main():
         target=run_server,
         daemon=True, 
         name="main-server-thread",
-        kwargs={"store_client": jsonStore},
     )
     server_thread.start()
 

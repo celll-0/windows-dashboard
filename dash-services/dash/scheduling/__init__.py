@@ -10,11 +10,7 @@ from dash.scheduling.schedulingStrategy import (
     RecurringTimeSchedulingStrategy,
     SchedulingStrategy,
 )
-from dash.scheduling.task import (
-    FetchSummaryTask, 
-    UpdateGuiSummaryTask,
-    Task
-)
+from dash.scheduling.task import Task
 from dash.scheduling.taskStatus import TaskStatus
 
 __all__ = [
@@ -28,6 +24,4 @@ __all__ = [
     "OneTimeSchedulingStrategy",
     "RecurringSchedulingStrategy",
     "TaskStatus",
-    "FetchSummaryTask",
-    "UpdateGuiSummaryTask"
 ]

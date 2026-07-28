@@ -61,7 +61,7 @@ class TaskSchedulerService:
                 task=task,
                 strategy=strategy,
                 sequence_number=self._sequence_counter,
-                callback=callback if callback else None
+                callback=callback
             )
             heapq.heappush(self._task_queue, scheduled_task)
 
@@ -72,7 +72,7 @@ class TaskSchedulerService:
                 scheduled_task.callback.get_name() if scheduled_task.callback else "None",
             )
 
-            if callback:
+            if scheduled_task.callback:
                 logger.info(
                     "Callback task '{}' scheduled to run on completion of '{}'",
                     scheduled_task.callback.get_name(),
@@ -109,7 +109,7 @@ class TaskSchedulerService:
 
     def _run_worker(self) -> None:
         while self._running:
-            task: ScheduledTask = None
+            task: Optional[ScheduledTask] = None
 
             with self._condition:
                 while self._running:
@@ -123,7 +123,7 @@ class TaskSchedulerService:
                     # determine how long until the tasks execute_time
                     next_task: ScheduledTask = self._task_queue[0]
                     now: datetime = datetime.now()
-                    delay: int = (next_task.next_execution_time - now).total_seconds()
+                    delay: float = (next_task.next_execution_time - now).total_seconds()
 
                     # pop the task from queue if it's time to execute or wait out the delay.
                     if delay <= 0:

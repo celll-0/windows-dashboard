@@ -8,7 +8,8 @@ from zoneinfo import ZoneInfo
 from typing import Any, Dict, List
 
 from loguru import logger
-from ..constants import TIMEZONE
+from ..constants import TIMEZONE, STORE_TABLES
+from dash.paths import DB_PATH
 
 
 class JsonPersistenceClient:
@@ -28,43 +29,39 @@ class JsonPersistenceClient:
         logger.info("Initialized local store client: {}", self._store_db)
 
     def update(self, data: Dict[str, Any], table_name: str) -> None:
+        if table_name not in STORE_TABLES:
+            raise ValueError(f"Invalid table name '{table_name}'.")
         with self._store_lock:
             if not self._is_empty_store():
                 with open(self._store_db, 'r+') as sf:
                     store: Dict[str, Any] = json.load(sf)#
                     # ensure the table exists in the store, then unpack and update fields.
                     # Raise exception if check fails on invalid table name
-                    if (
-                        store.get(table_name)
-                        and store.get(table_name) is not None
-                    ):
-                        store[table_name] = data
-                        self._json_dump_into_store(store, sf, table_name, sf.tell())
+                    if table_name in store:
+                        store[table_name].update(data)
+                        self._json_dump_into_store(store, sf, table_name)
                     else:
                         raise RuntimeError(
                             "Persistence Error - Table does not exist in store. Check for invalid table name or json store is set up correctly"
                         )
             else:
                 # Create the store object if json file does not already exist
-                if table_name in ['investments']:
-                    store = dict()
-                    store[table_name] = data
-                    with open(self._store_db, 'w+') as sf:
-                        self._json_dump_into_store(store, sf, table_name, 0)
+                store = {table: {} for table in STORE_TABLES}
+                store[table_name].update(data)
+                with open(self._store_db, 'w+') as sf:
+                    self._json_dump_into_store(store, sf, table_name, trunc_pos=0)
 
 
     def _json_dump_into_store(self,
         store: Dict[str, Any],
         store_file: TextIOWrapper,
         updated_table: str,
-        trunc_pos: int | None
+        trunc_pos: int | None = None
     ) -> None:
         # requires store to be a non-empty dict, otherwise raises ValueError
         if not store:
             raise ValueError("Cannot dump empty store into file")
         # add the timestamp for the updated table to the store before dumping to file
-        store[f'{updated_table}_timestamp'] = datetime.now(ZoneInfo(TIMEZONE)).isoformat()
-
         store_file.seek(0)
         store_file.truncate(trunc_pos)
         json.dump(store, store_file)
@@ -82,7 +79,7 @@ class JsonPersistenceClient:
 
 
 
-    def get_from_table(self, table_name: str) -> tuple[str, Dict[str, Any]]:
+    def get_from_table(self, table_name: str) -> Dict[str, Any]:
         with self._store_lock:
             if self._is_empty_store():
                 raise RuntimeError(
@@ -95,8 +92,7 @@ class JsonPersistenceClient:
                 # If not throw an error
                 data = store.get(table_name)
                 if data and data is not None:
-                    ts = store.get(f'{table_name}_timestamp')
-                    return ts, data
+                    return data
                 else:
                     raise RuntimeError(
                         "Persistence Error - Table does not exist in store. Check for invalid table name or json store is set up correctly"
@@ -109,3 +105,6 @@ class JsonPersistenceClient:
                 store = json.load(sf)
                 return not bool(store)
         return True
+
+
+PersistenceService = JsonPersistenceClient(store_path=DB_PATH)

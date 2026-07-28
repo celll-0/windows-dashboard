@@ -32,8 +32,10 @@ class ScheduledTask(BaseModel):
         return self._id
 
     @property
-    def next_execution_time(self) -> Optional[datetime]:
-        return self._next_execution_time
+    def next_execution_time(self) -> datetime:
+        if self._next_execution_time is None:
+            raise ValueError("Next execution time is not defined for this task.")
+        return self._next_execution_time 
 
     @property
     def status(self) -> TaskStatus:

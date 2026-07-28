@@ -52,10 +52,36 @@ TaskConfigs = {
                 time=time(hour=21, minute=30, second=0)
             ),
         ],
-        callback="update_gui_summary",
+        callback="push_to_widget",
+        store_in="investments.summary"
     ),
-    "UPDATE_GUI_SUMMARY": _(
-        name="update_gui_summary",
+    "FETCH_PORTFOLIO_POSITIONS": _(
+        name="fetch_portfolio_positions",
+        schedules=[
+            # Fetch summary on application start _____________
+            _(
+                type="one_time",
+                execution_time=datetime.now() + timedelta(seconds=10)
+            ),
+            # Recurring schedules ____________________________
+            _( # Just after LDN market open
+                type="recurring_time",
+                time=time(hour=8, minute=30, second=0)
+            ),
+            _( # LDN market close
+                type="recurring_time",
+                time=time(hour=16, minute=30, second=0)
+            ),
+            _( # NY market close
+                type="recurring_time",
+                time=time(hour=21, minute=30, second=0)
+            ),
+        ],
+        callback="push_to_widget",
+        store_in="investments.positions"
+    ),
+    "PUSH_TO_WIDGET": _(
+        name="push_to_widget",
         schedules=[],
         callback=None,
     ),
@@ -66,13 +92,14 @@ URLs = {
     "T212": _(
         base_url="https://live.trading212.com/api/v0",
         endpoints=_(
-            summary="/equity/account/summary"
+            summary="/equity/account/summary",
+            positions="/equity/positions",
         )
     ),
     "DASH_GUI": _(
         base_url=f"http://{GUI_HOST}:{GUI_PORT}",
         endpoints=_(
-            push_summary="/ingest/summary"
+            widget_ingest="/ingest/summary"
         )
     ),
 }

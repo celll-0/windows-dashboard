@@ -3,12 +3,12 @@
 import cherrypy
 from loguru import logger
 
-from .services import JsonPersistenceClient
+from .services import StoreLike, PersistenceService
 from .constants import SERVICES_DEFAULT_PORT, SERVICES_PORT, SERVER_HOST
 
 
 class DashboardDataServer(object):
-    _data_client: JsonPersistenceClient = None
+    _data_client: StoreLike = PersistenceService
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -18,19 +18,17 @@ class DashboardDataServer(object):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def summary(self):
-        ts, investment_data = self._data_client.get_from_table('investments')
-        return {"timestamp": ts, "investments": investment_data}
+        investments_data = self._data_client.get_from_table('investments')
+        return {"summary": investments_data.get("summary", {})}
 
-    def _set_data_client(self, data_client):
-        if isinstance(data_client, JsonPersistenceClient):
-            self._data_client = data_client
-        else:
-            raise TypeError(
-                f"Dashboard Data Server Error - data_client must be a JsonPersistenceClient. Recieved '{type(data_client)}'"
-            )
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def positions(self):
+        investments_data = self._data_client.get_from_table('investments')
+        return {"positions": investments_data.get("positions", {})}
 
 
-def run_server(store_client: JsonPersistenceClient):
+def run_server():
     """
     Subscribes single scheduler/task executor application to cherrypy engine lifecyle.
     Chosen methods are exposed at the base url on port 8080 (default).
@@ -50,7 +48,6 @@ def run_server(store_client: JsonPersistenceClient):
 
     # Configure and start cherrypy engine
     dashboard_data_server = DashboardDataServer()
-    dashboard_data_server._set_data_client(store_client)
 
     cherrypy.quickstart(
         dashboard_data_server,
