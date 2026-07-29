@@ -14,11 +14,11 @@ import sys
 
 import cherrypy
 from loguru import logger
-from PyQt6.QtCore import QUrl, QObject
+from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtQml import QQmlApplicationEngine
 
-from .bridge import SummaryBridge
+from .bridge import WidgetBridge
 from .config import Config
 from .data import AccountSummary, OpenPositions, SnapshotStore
 from .paths import MAIN_QML
@@ -34,7 +34,7 @@ class Application:
 
         self._config = Config.load()
         self._store = SnapshotStore(config=self._config)
-        self._bridge = SummaryBridge()
+        self._bridge = WidgetBridge()
         self._api_client = ApiClient(self._config.base_url)
 
         logger.debug("Loading QML: {}", MAIN_QML)

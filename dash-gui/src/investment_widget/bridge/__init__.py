@@ -1,3 +1,3 @@
-from .summary_bridge import SummaryBridge
+from .data_bridge import WidgetBridge
 
-__all__ = ["SummaryBridge"]
+__all__ = ["WidgetBridge"]

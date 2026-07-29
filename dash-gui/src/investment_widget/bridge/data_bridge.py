@@ -14,7 +14,7 @@ from ..presentation import empty_view_model
 from ..presentation.view_model import error_patch
 
 
-class SummaryBridge(QObject):
+class WidgetBridge(QObject):
     modelChanged = pyqtSignal()
     positionsChanged = pyqtSignal()
 
