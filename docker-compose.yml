@@ -10,6 +10,7 @@ services:
       # GUI configuration
       - GUI_PORT=${GUI_PORT}
       - GUI_HOST=host.docker.internal
+      - KEL_GUI_API_TOKEN=${KEL_GUI_API_TOKEN}
 
       # Server configuration
       - SERVICES_PORT=${SERVICES_PORT}

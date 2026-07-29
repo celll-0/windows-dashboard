@@ -1,4 +1,4 @@
-endpoint_url: "http://127.0.0.1:8080/api/v1/summary"
+base_url: "http://127.0.0.1:8080/api/v1"
 timezone: "Europe/London"
 poll_interval_seconds: 3600
 position:

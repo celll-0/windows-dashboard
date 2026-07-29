@@ -55,18 +55,20 @@ class DataObserver(TaskExecutionObserver):
         task = completed.task
         if task.is_data_task and task._data:
             investment_data = task.data or {}
-            investment_data["timestamp"] = datetime.now(tz=ZoneInfo(TIMEZONE)).isoformat()
             try:
-                # require data tasks to define a valid store table name for persistence,
-                # otherwise raise an exception
+                # require data tasks to define a valid store table name/key for
+                # persistence, otherwise raise an exception
                 if not task.store_table_name:
                     raise ValueError("Task does not name a valid table for data persistence")
+                if not task.store_key or task.store_key not in investment_data:
+                    raise ValueError("Task does not name a valid store key for data persistence")
+                investment_data[task.store_key]["timestamp"] = datetime.now(tz=ZoneInfo(TIMEZONE)).isoformat()
                 self._store.update(investment_data, task.store_table_name)
                 logger.info("Investment data updated successfully in the store")
             except Exception as e:
                 logger.error("Failed updating store: {}", e)
                 raise
-        else:
+        elif task.is_data_task:
             logger.warning(
                 "No investment data returned from task '{}'... Skipping store update", task.get_name()
             )

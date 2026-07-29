@@ -1,4 +1,4 @@
-from .models import AccountSummary
+from .models import AccountSummary, OpenPositions, Position
 from .snapshot_store import SnapshotStore
 
-__all__ = ["AccountSummary", "SnapshotStore"]
+__all__ = ["AccountSummary", "OpenPositions", "Position", "SnapshotStore"]

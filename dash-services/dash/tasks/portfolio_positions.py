@@ -1,4 +1,5 @@
 
+import re
 from typing import Optional
 from pydantic import PrivateAttr
 
@@ -15,6 +16,7 @@ class FetchPortfolioPositionsTask(Task):
     investmentsService: InvestmentDataService = InvestmentsService
     _store_in: Optional[str] = PrivateAttr(default_factory=lambda: task_config.store_in)
     _name: str = PrivateAttr(default_factory=lambda: task_config.name)
+    _gui_type: Optional[str] = PrivateAttr(default_factory=lambda: task_config.data_type)
     _data_task: bool = PrivateAttr(default=True)
 
     def get_name(self) -> str:
@@ -25,15 +27,28 @@ class FetchPortfolioPositionsTask(Task):
         try:
             portfolio_positions = self.investmentsService.get_positions()
             if portfolio_positions and portfolio_positions is not None:
-                # Extract the nested investments object; default to empty dict if missing
                 if not self.store_key:
                     raise ValueError("Store key is not defined for storing portfolio positions.")
-                self._data = {
-                    self.store_key: {
-                        position['instrument']['ticker']: position
-                        for position in portfolio_positions
+
+                reshaped = {}
+                for position in portfolio_positions:
+                    instrument = position['instrument']
+                    ticker = instrument['ticker']
+                    wallet = position['walletImpact']
+                    # Trading212 tacks a lowercase currency/exchange suffix onto
+                    # LSE tickers (e.g. "IGLNl_EQ", "SXRUd_EQ") -- strip it so the
+                    # displayed name is just the up-to-4-letter ticker symbol.
+                    display_name = re.sub(r'[a-z]+$', '', ticker.split('_')[0])[:4]
+                    reshaped[ticker] = {
+                        'ticker': ticker,
+                        'name': display_name,
+                        'currentPrice': position['currentPrice'],
+                        'quantity': position['quantity'],
+                        'totalCost': wallet['totalCost'],
+                        'currentValue': wallet['currentValue'],
+                        'unrealizedPl': wallet['unrealizedProfitLoss'],
                     }
-                }
+                self._data = {self.store_key: reshaped}
 
         except Exception as e:
             raise e

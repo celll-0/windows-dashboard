@@ -13,7 +13,10 @@ SERVICES_DEFAULT_PORT = 8000
 SERVICES_PORT = int(getenv('SERVICES_PORT', SERVICES_DEFAULT_PORT))
 
 # Delay (s) before executing a callback task after the main task completes
-CALLBACK_DELAY = 10
+CALLBACK_DELAY = 1
+
+# Timeout (s) to wait for the widget to be ready before pushing data
+WIDGET_READY_TIMEOUT = 20
 
 TIMEZONE = 'Europe/London' 
 

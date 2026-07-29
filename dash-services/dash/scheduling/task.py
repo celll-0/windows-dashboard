@@ -8,6 +8,7 @@ class Task(ABC, BaseModel):
     _data: Optional[Dict[str, Any]] = PrivateAttr(default={})
     _data_task: bool = PrivateAttr(default=False)
     _store_in: Optional[str] = PrivateAttr(default=None)
+    _gui_type: Optional[str] = PrivateAttr(default=None)
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -40,6 +41,11 @@ class Task(ABC, BaseModel):
     def store_key(self) -> Optional[str]:
         """Return the key under which the data will be stored in the store table."""
         return self._store_in.split(".")[-1] if self._store_in else None
+
+    @property
+    def gui_type(self) -> Optional[str]:
+        """Return the GUI data type this task's output should be tagged as when pushed to the widget."""
+        return self._gui_type
 
     @property
     def caller(self) -> Optional["Task"]:

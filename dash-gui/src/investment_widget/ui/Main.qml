@@ -23,6 +23,7 @@ Window {
 
     // The single binding surface to Python. Re-evaluates on modelChanged.
     property var m: bridge.model
+    property var positionsList: bridge.positions
 
     ColumnLayout {
         id: root
@@ -112,6 +113,13 @@ Window {
             text: m.updatedText
             font.pixelSize: 10
             color: m.updatedText.startsWith("Error") ? m.updatedColor : "#A5A69E"
+        }
+
+        // ---- Top movers ----------------------------------------------------
+        MoversSection {
+            Layout.fillWidth: true
+            Layout.topMargin: 4
+            positions: positionsList
         }
     }
 }

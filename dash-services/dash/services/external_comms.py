@@ -1,3 +1,7 @@
+import time
+import os
+import socket
+
 from loguru import logger
 from typing import Dict, Optional
 
@@ -27,3 +31,21 @@ def send_api_request(
         logger.error(f"{method.upper()} request to {url} failed")
         raise e
 
+
+def _is_running() -> bool:
+    host = os.getenv("GUI_HOST", "127.0.0.1")
+    port = int(os.getenv("GUI_PORT", "8001"))
+    try:
+        with socket.create_connection((host, port), timeout=1):
+            return True
+    except OSError:
+        return False
+
+
+def wait_for_widget_running(deadline: float) -> bool:
+    """Poll _is_running() until it returns True or the deadline passes."""
+    while time.monotonic() < deadline:
+        if _is_running():
+            return True
+        time.sleep(0.5)
+    return _is_running()

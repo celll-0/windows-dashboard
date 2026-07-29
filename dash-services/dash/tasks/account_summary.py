@@ -15,6 +15,7 @@ class FetchSummaryTask(Task):
     investmentsService: InvestmentDataService = InvestmentsService
     _name: str = PrivateAttr(default_factory=lambda: task_config.name)
     _store_in: Optional[str] = PrivateAttr(default_factory=lambda: task_config.store_in)
+    _gui_type: Optional[str] = PrivateAttr(default_factory=lambda: task_config.data_type)
     _data_task: bool = PrivateAttr(default=True)
 
 

@@ -20,11 +20,11 @@ from PyQt6.QtQml import QQmlApplicationEngine
 
 from .bridge import SummaryBridge
 from .config import Config
-from .data import AccountSummary, SnapshotStore
+from .data import AccountSummary, OpenPositions, SnapshotStore
 from .paths import MAIN_QML
 from .ingest import IngestServerThread
-from .presentation import build_view_model
-from .services import WidgetBehaviour, FetchSummaryWorker, ApiClient
+from .presentation import build_view_model, build_positions_view_model
+from .services import WidgetBehaviour, FetchInvestmentsDataWorker, ApiClient
 
 
 class Application:
@@ -35,6 +35,7 @@ class Application:
         self._config = Config.load()
         self._store = SnapshotStore(config=self._config)
         self._bridge = SummaryBridge()
+        self._api_client = ApiClient(self._config.base_url)
 
         logger.debug("Loading QML: {}", MAIN_QML)
         self._engine = QQmlApplicationEngine()
@@ -65,6 +66,14 @@ class Application:
         self._store.insert(summary.timestamp, summary.total_value)
         self._bridge.set_model(build_view_model(summary, baseline))
 
+    def _on_positions(self, open_positions: OpenPositions) -> None:
+        logger.info(
+            "Positions received | ts={} count={}",
+            open_positions.timestamp.isoformat(),
+            len(open_positions.positions),
+        )
+        self._bridge.set_positions(build_positions_view_model(open_positions.positions))
+
     def _on_error(self, message: str) -> None:
         logger.error("Event failed: {}", message)
         self._bridge.show_error(message)
@@ -92,11 +101,23 @@ class Application:
         )
         self._on_stop_requested()
 
+    def _on_investment_data(self, datapoint: str, data: object) -> None:
+        if not data or data is None:
+            logger.warning("Received empty data for datapoint '{}'", datapoint)
+            return
+
+        if datapoint == "summary" and isinstance(data, AccountSummary):
+            self._on_summary(data)
+        elif datapoint == "positions" and isinstance(data, OpenPositions):
+            self._on_positions(data)
+        else:
+            logger.warning("Received unexpected data type for datapoint '{}': {}", datapoint, type(data))
+            
     def _on_refresh_requested(self) -> None:
         logger.info("Refresh requested via control API")
-        worker = FetchSummaryWorker(ApiClient(self._config.endpoint_url))
-        worker.succeeded.connect(self._on_summary)
-        worker.failed.connect(self._on_error)
+        worker = FetchInvestmentsDataWorker(self._api_client, ["summary", "positions"])
+        worker.succeeded.connect(self._on_investment_data)
+        worker.failed.connect(lambda datapoint, message: self._on_error(message))
         worker.finished.connect(worker.deleteLater)
         worker.start()
         self._refresh_worker = worker  # keep a reference so it isn't GC'd mid-run
@@ -109,6 +130,7 @@ class Application:
         # `_on_refresh_requested`) -- no fetch happens automatically here.
         self._ingest_server = IngestServerThread(self._store)
         self._ingest_server.summaryReady.connect(self._on_summary)
+        self._ingest_server.positionsReady.connect(self._on_positions)
         self._ingest_server.stopRequested.connect(self._on_stop_requested)
         self._ingest_server.restartRequested.connect(self._on_restart_requested)
         self._ingest_server.refreshRequested.connect(self._on_refresh_requested)

@@ -123,6 +123,13 @@ class TaskSchedulerService:
                     # determine how long until the tasks execute_time
                     next_task: ScheduledTask = self._task_queue[0]
                     now: datetime = datetime.now()
+                    if next_task.next_execution_time is None:
+                        logger.warning(
+                            "Task '{}' has no next execution time. It will be removed from the queue.",
+                            next_task.task.get_name(),
+                        )
+                        heapq.heappop(self._task_queue)
+                        continue
                     delay: float = (next_task.next_execution_time - now).total_seconds()
 
                     # pop the task from queue if it's time to execute or wait out the delay.

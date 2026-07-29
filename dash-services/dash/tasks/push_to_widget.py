@@ -6,7 +6,8 @@ from os import environ
 from dash.config import TaskConfigs, URLs
 from dash.scheduling.task import Task
 from dash.services import PersistenceService, StoreLike
-from dash.services.external_comms import send_api_request
+from dash.services.external_comms import send_api_request, wait_for_widget_running
+from dash.constants import WIDGET_READY_TIMEOUT
 
 
 
@@ -21,29 +22,33 @@ class PushToWidgetTask(Task):
         return self._name
 
     def execute(self) -> None:
-        """Get the latest summary data from the store and push it to the widget."""
+        """Get the latest data for the caller task's store key and push it to the widget."""
         if not self._caller:
             raise ValueError("Cannot find task data. No caller task is set for this task.")
-        
+
         if not self._caller.store_table_name or not self._caller.store_key:
             raise ValueError("No table name or key defined for the caller task.")
-        data = {
-            k: v
-            for k, v in self._store.get_from_table(self._caller.store_table_name).items()
-            if k == self._caller.store_key
-        }
-        # only push to the GUI if all values are present and not None
-        if not all(data.values()):
+
+        if not self._caller.gui_type:
+            raise ValueError("No GUI type defined for the caller task.")
+
+        data = self._store.get_from_table(self._caller.store_table_name).get(self._caller.store_key)
+        # only push to the GUI if data is present and not empty
+        if not data:
             logger.warning(
                 f"{self._caller.store_key} data is incomplete or contains None values. Skipping push to widget."
             )
+            return
+
+        if not wait_for_widget_running(deadline=WIDGET_READY_TIMEOUT):
+            logger.warning("Widget is not running. Skipping push to widget.")
             return
         try:
             success = send_api_request(
                 "POST",
                 self._widget_ingest_url(),
                 headers={"Authorization": f"Bearer {environ.get('KEL_GUI_API_TOKEN')}"},
-                data=data,
+                json={"type": self._caller.gui_type, "data": data},
                 timeout=5,
             )
             if success:

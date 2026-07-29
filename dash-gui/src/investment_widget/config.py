@@ -10,7 +10,7 @@ from .paths import CONFIG_PATH
 
 @dataclass
 class Config:
-    endpoint_url: str
+    base_url: str
     poll_interval_seconds: int
     position: dict
     timezone: str
@@ -20,14 +20,14 @@ class Config:
         """Load configuration from the project root, or create a default if not found."""
         conf = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
         cfg = cls(
-            endpoint_url=conf["endpoint_url"],
+            base_url=conf["base_url"],
             timezone=conf["timezone"],
             poll_interval_seconds=int(conf["poll_interval_seconds"]),
             position=conf["position"],
         )
         logger.info(
-            "Config loaded | endpoint={} poll_interval={}s position={}",
-            cfg.endpoint_url,
+            "Config loaded | base_url={} poll_interval={}s position={}",
+            cfg.base_url,
             cfg.poll_interval_seconds,
             cfg.position,
         )

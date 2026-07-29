@@ -47,7 +47,7 @@ Edit `config.json` to point at your container:
 
 ```json
 {
-  "endpoint_url": "http://example:{port}/summary",
+  "base_url": "http://example:{port}/api/v1",
   "poll_interval_seconds": 60,
   "position": { "x": 20, "y": 20 }
 }

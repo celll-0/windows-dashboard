@@ -26,7 +26,7 @@ TaskConfigs = {
             # Fetch summary on application start _____________
             _(
                 type="one_time",
-                execution_time=datetime.now() + timedelta(seconds=5)
+                execution_time=datetime.now() + timedelta(seconds=1)
             ),
 
             # Recurring schedules ____________________________
@@ -53,7 +53,8 @@ TaskConfigs = {
             ),
         ],
         callback="push_to_widget",
-        store_in="investments.summary"
+        store_in="investments.summary",
+        data_type="AccountSummary"
     ),
     "FETCH_PORTFOLIO_POSITIONS": _(
         name="fetch_portfolio_positions",
@@ -61,7 +62,7 @@ TaskConfigs = {
             # Fetch summary on application start _____________
             _(
                 type="one_time",
-                execution_time=datetime.now() + timedelta(seconds=10)
+                execution_time=datetime.now() + timedelta(seconds=1)
             ),
             # Recurring schedules ____________________________
             _( # Just after LDN market open
@@ -78,7 +79,8 @@ TaskConfigs = {
             ),
         ],
         callback="push_to_widget",
-        store_in="investments.positions"
+        store_in="investments.positions",
+        data_type="OpenPositions"
     ),
     "PUSH_TO_WIDGET": _(
         name="push_to_widget",
@@ -99,7 +101,7 @@ URLs = {
     "DASH_GUI": _(
         base_url=f"http://{GUI_HOST}:{GUI_PORT}",
         endpoints=_(
-            widget_ingest="/ingest/summary"
+            widget_ingest="/ingest/update"
         )
     ),
 }
