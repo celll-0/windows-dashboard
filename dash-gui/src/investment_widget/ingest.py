@@ -94,10 +94,12 @@ class IngestServerThread(QThread):
         threading.current_thread().name = QThread.currentThread().objectName()
         cherrypy.tree.mount(self._server, "/ingest", {"/": {}})
         cherrypy.tree.mount(self._control, "/control", {"/": {}})
+
+        server_port = int(os.getenv("GUI_PORT", "8001") if os.getenv("ENV") != "development" else int(os.getenv("GUI_TEST_PORT", "8075")))
         cherrypy.config.update({
             "global": {
                 "server.socket_host": "0.0.0.0",
-                "server.socket_port": int(os.getenv("GUI_PORT")),
+                "server.socket_port": server_port,
                 "server.socket_timeout": 3,
             },
         })

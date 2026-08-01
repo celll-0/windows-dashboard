@@ -4,6 +4,7 @@ from __future__ import annotations
 import yaml
 from dataclasses import dataclass, asdict
 from loguru import logger
+from os import getenv
 
 from .paths import CONFIG_PATH
 
@@ -19,8 +20,12 @@ class Config:
     def load(cls) -> "Config":
         """Load configuration from the project root, or create a default if not found."""
         conf = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
+        if getenv("ENV") != "development":
+            services_port = getenv("SERVICES_PORT", 8080)
+        else:
+            services_port = getenv("SERVICES_TEST_PORT", 8075)
         cfg = cls(
-            base_url=conf["base_url"],
+            base_url=conf["base_url"].format(port=services_port),
             timezone=conf["timezone"],
             poll_interval_seconds=int(conf["poll_interval_seconds"]),
             position=conf["position"],

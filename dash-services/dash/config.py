@@ -1,21 +1,6 @@
-from types import SimpleNamespace
 from datetime import datetime, time, timedelta
+from .constants import GUI_HOST, GUI_PORT, _
 
-from .constants import GUI_HOST, GUI_PORT
-
-
-class _(SimpleNamespace):
-    """
-    Read-only SimpleNamespace. Prevents accidental mutation of config values.
-    Also allows for dot notation access to config values.
-    Raises AttributeError on mutation.
-    """
-
-    def __setattr__(self, name, value):
-        raise AttributeError("Config namespace is read-only")
-
-    def __delattr__(self, name):
-        raise AttributeError("Config namespace is read-only")
 
 
 # _____________________ TASK CONFIGURATIONS _____________________
@@ -30,7 +15,6 @@ TaskConfigs = {
             ),
 
             # Recurring schedules ____________________________
-
             _( # Just before LDN market open
                 type="recurring_time",
                 time=time(hour=7, minute=30, second=0)

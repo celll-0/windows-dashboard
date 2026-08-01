@@ -26,18 +26,21 @@ BUILD_SCRIPT = REPO_ROOT / "scripts" / "build-gui-exe.ps1"
 
 READY_TIMEOUT_SECONDS = 30
 
+WIDGET_PORT = int(
+    os.getenv("GUI_PORT", "8001")
+    if os.getenv("ENV") != "development"
+    else int(os.getenv("GUI_TEST_PORT", "8075"))
+)
+
+WIDGET_HOST = os.getenv("GUI_HOST", "127.0.0.1")
 
 def _base_url() -> str:
-    host = os.getenv("GUI_HOST", "127.0.0.1")
-    port = os.getenv("GUI_PORT", "8001")
-    return f"http://{host}:{port}/control"
+    return f"http://{WIDGET_HOST}:{WIDGET_PORT}/control"
 
 
 def _is_running() -> bool:
-    host = os.getenv("GUI_HOST", "127.0.0.1")
-    port = int(os.getenv("GUI_PORT", "8001"))
     try:
-        with socket.create_connection((host, port), timeout=1):
+        with socket.create_connection((WIDGET_HOST, WIDGET_PORT), timeout=1):
             return True
     except OSError:
         return False
