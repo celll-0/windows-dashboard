@@ -88,4 +88,21 @@ URLs = {
             widget_ingest="/ingest/update"
         )
     ),
+    "GN_FIREBASE_ID": _(
+        base_url="https://identitytoolkit.googleapis.com/v1",
+        endpoints=_(
+            sign_in="/accounts:signInWithPassword",
+            sign_up="/accounts:lookup",
+            refresh_token="/v1/token"
+        )
+    ),
+    "GN_SERVER": _(
+        base_url="https://web-api-cdn.ground.news",
+        endpoints=_(
+            subscribed_topics="/api/v04/interests/listMy",
+            fetch_topics="/api/v04/interests/list",
+            story="/api/v06/story/:id/web",
+            login="/api/v04/user/login"
+        )
+    ),
 }
