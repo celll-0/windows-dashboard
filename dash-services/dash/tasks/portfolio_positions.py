@@ -5,7 +5,7 @@ from pydantic import PrivateAttr
 
 from dash.config import TaskConfigs
 from dash.scheduling.task import Task
-from dash.services.investmentsService import (
+from dash.services import (
     InvestmentDataService,
     InvestmentsService
 )

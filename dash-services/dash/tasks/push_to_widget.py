@@ -11,8 +11,6 @@ from dash.constants import WIDGET_READY_TIMEOUT
 
 
 
-
-
 class PushToWidgetTask(Task):
     _store: StoreLike = PersistenceService
 

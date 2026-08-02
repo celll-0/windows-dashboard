@@ -10,7 +10,7 @@ from dash.scheduling import (
     RecurringSchedulingStrategy,
     OneTimeSchedulingStrategy,
 )
-from dash.services.schedulingService import TaskSchedulerService
+from dash.services.scheduling import TaskSchedulerService
 
 
 

@@ -1,7 +1,9 @@
 from typing import Protocol
 from typing import Any, Dict
-from dash.services.investmentsService import InvestmentsService
-from dash.services.persistenceClient import PersistenceService
+from dash.services.investments import (
+    InvestmentsService, InvestmentDataService
+)
+from dash.services.database import PersistenceService
 
 
 class StoreLike(Protocol):
@@ -9,4 +11,9 @@ class StoreLike(Protocol):
     def get_from_table(self, table_name: str) -> Dict[str, Any]: ...
 
 
-__all__ = ["InvestmentsService", "PersistenceService", "StoreLike"]
+__all__ = [
+    "InvestmentsService",
+    "PersistenceService",
+    "StoreLike",
+    "InvestmentDataService",
+]
