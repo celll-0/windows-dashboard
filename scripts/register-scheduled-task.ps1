@@ -1,7 +1,7 @@
 #requires -Version 5.1
 <#
 .SYNOPSIS
-  Registers the "Kel-dash" scheduled task: runs start-hidden.vbs at this
+  Registers the "Daily Brief Widget" scheduled task: runs start-hidden.vbs at this
   user's logon, fully headless (no console/window ever flashes).
   Run this once manually per machine. No admin rights required.
 #>
@@ -27,9 +27,9 @@ $principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" 
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
     -StartWhenAvailable -MultipleInstances IgnoreNew
 
-Register-ScheduledTask -TaskName "Kel-dash" `
+Register-ScheduledTask -TaskName "Daily Brief Widget" `
     -Action $action -Trigger $trigger -Principal $principal -Settings $settings `
-    -Description "Starts dash-services (Docker) and launches Kel-dash.exe headlessly at logon." `
+    -Description "Starts dash-services (Docker) and launches Daily Brief Widget headlessly at logon." `
     -Force
 
-Write-Host "Registered scheduled task 'Kel-dash'. Verify with: Get-ScheduledTask -TaskName Kel-dash"
+Write-Host "Registered scheduled task 'Daily Brief Widget'. Verify with: Get-ScheduledTask -TaskName 'Daily Brief Widget'"

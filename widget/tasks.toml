@@ -1,0 +1,10 @@
+[[tool.poe.tasks.widget]]
+script = "main"
+envfile = ["${POE_ROOT}/.env", "${POE_ROOT}/.env.prod"]
+env.PYTHONPATH = "${POE_ROOT}/widget/src"
+
+
+[[tool.poe.tasks.widget-dev]]
+script = "main"
+envfile = ["${POE_ROOT}/.env", "${POE_ROOT}/.env.local"]
+env.PYTHONPATH = "${POE_ROOT}/widget/src"

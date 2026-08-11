@@ -15,10 +15,9 @@ ENV PATH="/home/app/.local/bin:$PATH"
 COPY pyproject.toml poetry.lock ./
 RUN poetry install --only services,shared --no-root
 
-COPY --chown=app:app dash-services/dash/ ./dash/
-COPY --chown=app:app dash-services/scripts/ ./scripts/
-COPY --chown=app:app dash-services/logging_conf.py ./logging_conf.py
-COPY --chown=app:app dash-services/main.py ./main.py
+COPY --chown=app:app daily_brief/src/dbrief/ ./dbrief/
+COPY --chown=app:app daily_brief/logging_conf.py ./logging_conf.py
+COPY --chown=app:app daily_brief/main.py ./main.py
 # Copy the installed dependencies from the build stage
 RUN poetry install --only services,shared
 

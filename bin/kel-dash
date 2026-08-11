@@ -2,4 +2,4 @@
 # bin/kel-dash -- forwards to the dash-cli tool via Poetry.
 repo_root=$(cd "$(dirname "$0")/.." && pwd)
 cd "$repo_root"
-exec poetry run python "$repo_root/dash-cli/main.py" "$@"
+exec poetry run python "$repo_root/dbrief_cli/main.py" "$@"

@@ -1,0 +1,4 @@
+[[tool.poe.tasks.services]]
+shell = "python -m main"
+envfile = ["${POE_ROOT}/.env", "${POE_ROOT}/.env.local"]
+env.PYTHONPATH = "${POE_ROOT}/daily_brief/src"

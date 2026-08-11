@@ -1,6 +1,0 @@
-base_url: "http://127.0.0.1:{port}/api/v1"
-timezone: "Europe/London"
-poll_interval_seconds: 3600
-position:
-  x: 500
-  y: 250

@@ -1,50 +1,81 @@
 [project]
-name = "dashboard"
+name = "daily_brief"
 version = "0.1.0"
 description = ""
 authors = [
     {name = "cheleaux", email = "nazareth.dnd@gmail.com"}
 ]
 requires-python = ">=3.12"
-dependencies = ["tzdata (>=2026.2,<2027.0)"]
+dynamic = [ "dependencies" ]
+
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+
 [tool.poetry]
-name = "dashboard"
+name = "daily_brief"
 version = "0.1.0"
 package-mode = false
 
-# ── shared by both apps ──────────────────────────────────────────────────────
+
+[tool.poe]
+poetry_command = ""
+
+
+[[tool.poe.include]]
+path = "daily_brief/tasks.toml"
+cwd = "daily_brief"
+
+
+[[tool.poe.include]]
+path = "widget/tasks.toml"
+cwd = "widget"
+
+
+[pytest]
+log_cli = true
+log_cli_level = "DEBUG"
+
+
 [tool.poetry.group.shared.dependencies]
 pyaml = ">=26.2.1,<27.0.0"
 loguru = { version = ">=0.7.3,<0.8.0", python = ">=3.12,<4.0" }
 loguru-config = { version = ">=0.1.0,<0.2.0", python = ">=3.12,<4.0" }
 cherrypy = ">=18.10.0,<19.0.0"
+tzdata = ">=2026.2,<2027.0"
+
 
 [tool.poetry.group.shared-dev.dependencies]
 python-dotenv = ">=1.2.2,<2.0.0"
+pytest = "^9.1.1"
+poethepoet = "^0.48.0"
 
-# ── dash-gui ─────────────────────────────────────────────────────────────────
+
+# ── services ────────────────────────────────────────────────────────────
+[tool.poetry.group.services.dependencies]
+pydantic = ">=2.13.4,<3.0.0"
+requests = ">=2.34.2,<3.0.0"
+curl-cffi = "^0.16.0"
+
+
+[tool.poetry.group.services-dev.dependencies]
+psutil = ">=6.0.0"
+
+
+# ── gui ─────────────────────────────────────────────────────────────────
 [tool.poetry.group.gui.dependencies]
 pyqt6 = ">=6.11.0,<7.0.0"
 requests = ">=2.32.0,<3.0.0"
 pyobjc-framework-Quartz = { version = "*", markers = "sys_platform == 'darwin'" }
 
-# ── dash-services ─────────────────────────────────────────────────────────────
-[tool.poetry.group.services.dependencies]
-pydantic = ">=2.13.4,<3.0.0"
-requests = ">=2.34.2,<3.0.0"
 
-[tool.poetry.group.services-dev.dependencies]
-psutil = ">=6.0.0"
-
-# ── dash-cli ─────────────────────────────────────────────────────────────────
+# ── cli ─────────────────────────────────────────────────────────────────
 [tool.poetry.group.cli.dependencies]
 requests = ">=2.32.0,<3.0.0"
 
-# ── windows exe build ─────────────────────────────────────────────────────────
+
+# ── windows exe build ───────────────────────────────────────────────────
 [tool.poetry.group.build-windows.dependencies]
 pyinstaller = { version = ">=6.11.0,<7.0.0", python = ">=3.12,<3.15", markers = "sys_platform == 'win32'" }

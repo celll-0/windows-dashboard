@@ -7,6 +7,8 @@ __pycache__/
 /build/
 **/poetry.lock
 !poetry.lock
+.pytest_cache/
+
 
 # storage
 store.json
@@ -15,13 +17,14 @@ store.json
 # Environment
 .env
 .env.local
-.env.production
+.env.prod
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+.claude
 
 # OS
 .DS_Store

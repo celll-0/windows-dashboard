@@ -1,24 +1,11 @@
 services:
   dash_provider:
     build: .
+    env_file:
+      - path: ./.env
+      - path: ./.env.prod
     ports:
-      - "${SERVICES_PORT}:${SERVICES_PORT}"
-    environment:
-      # Set the timezone for the container
-      - TZ=Europe/London
-
-      # GUI configuration
-      - GUI_PORT=${GUI_PORT}
-      - GUI_HOST=host.docker.internal
-      - KEL_GUI_API_TOKEN=${KEL_GUI_API_TOKEN}
-
-      # Server configuration
-      - SERVICES_PORT=${SERVICES_PORT}
-
-      # investment account vars
-      - TRADING212_AUTH_KEY=${TRADING212_AUTH_KEY}
-      - TRADING212_KEY_ID=${TRADING212_KEY_ID}
-      - TRADING212_BASE_URL=${TRADING212_BASE_URL}
+      - "8080:8080"
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
