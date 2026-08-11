@@ -1,5 +1,4 @@
 import time
-import os
 import socket
 
 from loguru import logger
@@ -7,6 +6,8 @@ from typing import Dict, Optional
 
 from curl_cffi import requests
 from curl_cffi.requests.exceptions import RequestException
+
+from dbrief.constants import GUI_HOST, GUI_PORT
 
 
 def get(url: str, session: Optional[requests.Session] = None, **kwargs) -> Optional[Dict]:
@@ -46,17 +47,17 @@ def post(url: str, session: Optional[requests.Session] = None, **kwargs) -> Opti
 
 
 def _is_running() -> bool:
-    host = os.getenv("GUI_HOST", "127.0.0.1")
-    port = int(os.getenv("GUI_PORT", "8001"))
     try:
-        with socket.create_connection((host, port), timeout=1):
+        with socket.create_connection((GUI_HOST, GUI_PORT), timeout=1):
             return True
     except OSError:
         return False
 
 
-def wait_for_widget_running(deadline: float) -> bool:
-    """Poll _is_running() until it returns True or the deadline passes."""
+def wait_for_widget_running(timeout: float) -> bool:
+    """Poll _is_running() until it returns True or timeout seconds elapse."""
+    logger.info(f"Waiting for widget to be running")
+    deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if _is_running():
             return True

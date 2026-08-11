@@ -5,7 +5,7 @@ services:
       - path: ./.env
       - path: ./.env.prod
     ports:
-      - "8080:8080"
+      - "${SERVICES_PORT:-8002}:${SERVICES_PORT:-8002}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

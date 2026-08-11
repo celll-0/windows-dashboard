@@ -16,7 +16,7 @@ SERVICES_PORT = int(getenv('SERVICES_PORT', SERVICES_DEFAULT_PORT))
 CALLBACK_DELAY = 1
 
 # Timeout (s) to wait for the widget to be ready before pushing data
-WIDGET_READY_TIMEOUT = 20
+WIDGET_READY_TIMEOUT: float = 20
 
 TIMEZONE = 'Europe/London' 
 

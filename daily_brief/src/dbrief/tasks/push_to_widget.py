@@ -39,7 +39,7 @@ class PushToWidgetTask(Task):
             )
             return
 
-        if not wait_for_widget_running(deadline=WIDGET_READY_TIMEOUT):
+        if not wait_for_widget_running(timeout=WIDGET_READY_TIMEOUT):
             logger.warning("Widget is not running. Skipping push to widget.")
             return
         try:
@@ -61,4 +61,4 @@ class PushToWidgetTask(Task):
 
     def _widget_ingest_url(self) -> str:
         """Construct the URL for pushing data to the widget."""
-        return f"{URLs['DASH_GUI'].base_url}{URLs['DASH_GUI'].endpoints.widget_ingest}"
+        return f"{URLs['GUI'].base_url}{URLs['GUI'].endpoints.widget_ingest}"

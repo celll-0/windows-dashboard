@@ -99,7 +99,7 @@ URLs = {
             positions="/equity/positions",
         )
     ),
-    "DASH_GUI": _(
+    "GUI": _(
         base_url=f"http://{GUI_HOST}:{GUI_PORT}",
         endpoints=_(
             widget_ingest="/ingest/update"

@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
 REM Resolve repo root as the parent of this script's directory (scripts\ -> repo root).
 set "SCRIPT_DIR=%~dp0"
@@ -40,6 +40,47 @@ goto wait_for_docker
 :docker_ready
 echo Docker Engine is ready.
 
+REM Load .env, then .env.prod on top (same layering as the "widget" poe
+REM task's envfile = [".env", ".env.prod"] -- .env.prod wins on shared keys
+REM like GUI_HOST). Done into THIS process's environment for two reasons:
+REM DailyBrief.exe does not call load_dotenv() in production, so it inherits
+REM these when launched below; and `docker compose up` needs SERVICES_PORT
+REM in its own environment too, since docker-compose.yml's `ports:` mapping
+REM is `${SERVICES_PORT:-8002}:${SERVICES_PORT:-8002}` -- Compose does NOT
+REM read .env.prod on its own (only the container gets it, via env_file,
+REM which is too late for port mapping resolved at "up" time), so without
+REM this the exposed port silently falls back to 8002 regardless of what
+REM .env.prod says. Keep this block AFTER the ping/Docker-wait section above:
+REM .env/.env.prod are user-writable, and a poisoned SystemRoot=/PING_EXE=
+REM line in one must not be able to reach PING_EXE's resolution before those
+REM calls run.
+REM Values in these files may be wrapped in single/double quotes (e.g.
+REM SERVICES_PORT='8070') the way dotenv-style loaders expect -- strip them
+REM here too, since `for /f` does not, and a quoted port string would
+REM otherwise reach docker compose's ${SERVICES_PORT:-8002} substitution
+REM literally (producing an invalid "'8070'" container port).
+if exist "%REPO_ROOT%.env" (
+    for /f "usebackq eol=# tokens=1,2 delims==" %%A in ("%REPO_ROOT%.env") do (
+        if not "%%A"=="" (
+            set "_val=%%B"
+            set "_val=!_val:'=!"
+            set "_val=!_val:"=!"
+            set "%%A=!_val!"
+        )
+    )
+)
+if exist "%REPO_ROOT%.env.prod" (
+    for /f "usebackq eol=# tokens=1,2 delims==" %%A in ("%REPO_ROOT%.env.prod") do (
+        if not "%%A"=="" (
+            set "_val=%%B"
+            set "_val=!_val:'=!"
+            set "_val=!_val:"=!"
+            set "%%A=!_val!"
+        )
+    )
+)
+set "ENV=production"
+
 echo Starting dash-services (docker compose)...
 docker compose up -d
 if errorlevel 1 (
@@ -49,18 +90,6 @@ if errorlevel 1 (
 
 REM Give the backend a moment to come up before the GUI's first fetch.
 "%PING_EXE%" -n 7 127.0.0.1 >nul
-
-REM DailyBrief.exe does not call load_dotenv() in production, so load .env
-REM into THIS process's environment -- the exe inherits it when launched.
-REM Keep this block AFTER the ping/Docker-wait section above: .env is
-REM user-writable, and a poisoned SystemRoot=/PING_EXE= line in it must not
-REM be able to reach PING_EXE's resolution before those calls run.
-if exist "%REPO_ROOT%.env" (
-    for /f "usebackq eol=# tokens=1,2 delims==" %%A in ("%REPO_ROOT%.env") do (
-        if not "%%A"=="" set "%%A=%%B"
-    )
-)
-set "ENV=production"
 
 set "DAILYBRIEF_EXE=%REPO_ROOT%dist\DailyBrief\DailyBrief.exe"
 if not exist "%DAILYBRIEF_EXE%" (
