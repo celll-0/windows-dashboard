@@ -32,7 +32,7 @@ class IngestServer(QObject):
 
     def _check_token(self) -> bool:
         auth = cherrypy.request.headers.get("Authorization", "")
-        expected = os.getenv("KEL_GUI_API_TOKEN")
+        expected = os.getenv("DAILYBRIEF_GUI_API_TOKEN")
         if not expected or auth != f"Bearer {expected}":
             logger.warning("Rejected ingest request with invalid/missing token")
             cherrypy.response.status = 401

@@ -1,7 +1,7 @@
 #requires -Version 5.1
 <#
 .SYNOPSIS
-  Builds dist\Kel-dash\Kel-dash.exe via PyInstaller (onedir, windowed).
+  Builds dist\DailyBrief\DailyBrief.exe via PyInstaller (onedir, windowed).
   Invoked manually, or automatically by the pre-push git hook.
   Exits non-zero on any failure so callers (the git hook) can abort.
 #>
@@ -32,20 +32,20 @@ if (-not (Test-Path $pyInstaller)) {
 }
 
 Write-Host "== Running PyInstaller (onedir, windowed) =="
-& $pyInstaller "Kel-dash.spec" --noconfirm --clean
+& $pyInstaller "DailyBrief.spec" --noconfirm --clean
 if ($LASTEXITCODE -ne 0) {
     throw "PyInstaller build failed with exit code $LASTEXITCODE"
 }
 
-$distDir = Join-Path $RepoRoot "dist\Kel-dash"
-$exePath = Join-Path $distDir "Kel-dash.exe"
+$distDir = Join-Path $RepoRoot "dist\DailyBrief"
+$exePath = Join-Path $distDir "DailyBrief.exe"
 if (-not (Test-Path $exePath)) {
     throw "Build reported success but $exePath was not produced"
 }
 
 Write-Host "== Seeding runtime config (first run only; never overwrites) =="
 $seed = @{
-    (Join-Path $RepoRoot "dash-gui\config.yml") = (Join-Path $distDir "config.yml")
+    (Join-Path $RepoRoot "widget\config.yml")   = (Join-Path $distDir "config.yml")
     (Join-Path $RepoRoot "logging.yml")         = (Join-Path $distDir "logging.yml")
 }
 foreach ($src in $seed.Keys) {

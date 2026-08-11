@@ -68,6 +68,7 @@ psutil = ">=6.0.0"
 [tool.poetry.group.gui.dependencies]
 pyqt6 = ">=6.11.0,<7.0.0"
 requests = ">=2.32.0,<3.0.0"
+pydantic = ">=2.13.4,<3.0.0"
 pyobjc-framework-Quartz = { version = "*", markers = "sys_platform == 'darwin'" }
 
 

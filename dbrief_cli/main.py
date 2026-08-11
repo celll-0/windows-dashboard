@@ -1,7 +1,7 @@
-"""kel-dash CLI: talk to the running Kel-dash widget's local control API.
+"""dailybrief CLI: talk to the running DailyBrief widget's local control API.
 
-Run via bin/kel-dash (POSIX) or bin/kel-dash.cmd (Windows), or directly:
-    poetry run python dash-cli/main.py <command> [options]
+Run via bin/dailybrief (POSIX) or bin/dailybrief.cmd (Windows), or directly:
+    poetry run python dbrief_cli/main.py <command> [options]
 """
 from __future__ import annotations
 
@@ -20,8 +20,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-EXE_PATH = REPO_ROOT / "dist" / "Kel-dash" / "Kel-dash.exe"
-LOG_PATH = EXE_PATH.parent / "logs" / "kel-dash.log"
+EXE_PATH = REPO_ROOT / "dist" / "DailyBrief" / "DailyBrief.exe"
+LOG_PATH = EXE_PATH.parent / "logs" / "dailybrief.log"
 BUILD_SCRIPT = REPO_ROOT / "scripts" / "build-gui-exe.ps1"
 
 READY_TIMEOUT_SECONDS = 30
@@ -52,11 +52,11 @@ def _wait_for(target_running: bool, deadline: float) -> bool:
 
 
 def _headers() -> dict:
-    token = os.getenv("KEL_DASH_CONTROL_TOKEN")
+    token = os.getenv("DAILYBRIEF_CONTROL_TOKEN")
     if not token:
-        print("KEL_DASH_CONTROL_TOKEN is not set (check your .env)", file=sys.stderr)
+        print("DAILYBRIEF_CONTROL_TOKEN is not set (check your .env)", file=sys.stderr)
         sys.exit(1)
-    return {"X-Kel-Dash-Token": token}
+    return {"X-DailyBrief-Token": token}
 
 
 def _call(method: str, path: str, **kwargs) -> int:
@@ -64,7 +64,7 @@ def _call(method: str, path: str, **kwargs) -> int:
     try:
         resp = requests.request(method, url, headers=_headers(), timeout=10, **kwargs)
     except requests.RequestException as exc:
-        print(f"Could not reach Kel-dash at {url}: {exc}", file=sys.stderr)
+        print(f"Could not reach DailyBrief at {url}: {exc}", file=sys.stderr)
         return 1
 
     try:
@@ -80,12 +80,12 @@ def _call(method: str, path: str, **kwargs) -> int:
 
 def cmd_start(_args: argparse.Namespace) -> int:
     if _is_running():
-        print("Kel-dash is already running")
+        print("DailyBrief is already running")
         return 0
 
     if not EXE_PATH.exists():
-        print(f"Kel-dash.exe not found at {EXE_PATH}", file=sys.stderr)
-        print("Build it first: kel-dash build", file=sys.stderr)
+        print(f"DailyBrief.exe not found at {EXE_PATH}", file=sys.stderr)
+        print("Build it first: dailybrief build", file=sys.stderr)
         return 1
 
     # Force production path resolution in the launched exe -- without this it
@@ -101,9 +101,9 @@ def cmd_start(_args: argparse.Namespace) -> int:
     )
     print(f"Started {EXE_PATH}; waiting for it to come up...")
     if not _wait_for(True, time.monotonic() + READY_TIMEOUT_SECONDS):
-        print("Timed out waiting for Kel-dash to become reachable", file=sys.stderr)
+        print("Timed out waiting for DailyBrief to become reachable", file=sys.stderr)
         return 1
-    print("Kel-dash is up; triggering refresh")
+    print("DailyBrief is up; triggering refresh")
     return _call("POST", "refresh")
 
 
@@ -119,9 +119,9 @@ def cmd_restart(_args: argparse.Namespace) -> int:
     deadline = time.monotonic() + READY_TIMEOUT_SECONDS
     _wait_for(False, deadline)  # best-effort; fall through to the up-check regardless
     if not _wait_for(True, deadline):
-        print("Timed out waiting for Kel-dash to come back up after restart", file=sys.stderr)
+        print("Timed out waiting for DailyBrief to come back up after restart", file=sys.stderr)
         return 1
-    print("Kel-dash is back up; triggering refresh")
+    print("DailyBrief is back up; triggering refresh")
     return _call("POST", "refresh")
 
 
@@ -136,8 +136,8 @@ def cmd_snapshots(args: argparse.Namespace) -> int:
 
 def cmd_build(_args: argparse.Namespace) -> int:
     if _is_running():
-        print("Kel-dash is currently running -- stop it first (kel-dash stop) before rebuilding.", file=sys.stderr)
-        print(r"PyInstaller can't overwrite dist\Kel-dash while the running exe holds files open there.", file=sys.stderr)
+        print("DailyBrief is currently running -- stop it first (dailybrief stop) before rebuilding.", file=sys.stderr)
+        print(r"PyInstaller can't overwrite dist\DailyBrief while the running exe holds files open there.", file=sys.stderr)
         return 1
     result = subprocess.run(
         ["powershell", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(BUILD_SCRIPT)],
@@ -200,7 +200,7 @@ def cmd_logs_attach(_args: argparse.Namespace) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="kel-dash", description="Control the running Kel-dash widget.")
+    parser = argparse.ArgumentParser(prog="dailybrief", description="Control the running DailyBrief widget.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser(
@@ -211,7 +211,7 @@ def main() -> int:
         "restart", help="Restart the widget and refresh once it's back up"
     ).set_defaults(func=cmd_restart)
     subparsers.add_parser("refresh", help="Trigger an immediate data refresh").set_defaults(func=cmd_refresh)
-    subparsers.add_parser("build", help="Rebuild Kel-dash.exe (refuses while it's running)").set_defaults(func=cmd_build)
+    subparsers.add_parser("build", help="Rebuild DailyBrief.exe (refuses while it's running)").set_defaults(func=cmd_build)
 
     snapshots_parser = subparsers.add_parser("snapshots", help="List stored snapshots")
     snapshots_parser.add_argument("--since", help="ISO-8601 timestamp; only snapshots at/after this time")

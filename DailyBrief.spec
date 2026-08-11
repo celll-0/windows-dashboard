@@ -1,22 +1,22 @@
-# Kel-dash.spec
-# Build with: pyinstaller Kel-dash.spec --noconfirm --clean
+# DailyBrief.spec
+# Build with: pyinstaller DailyBrief.spec --noconfirm --clean
 # (invoked by scripts/build-gui-exe.ps1, which resolves the Poetry venv first)
 import os
 from PyInstaller.utils.hooks import collect_all, copy_metadata
 
 # --- Bundled read-only resources -------------------------------------------
 datas = [
-    ("dash-gui/src/investment_widget/ui", "investment_widget/ui"),
+    ("widget/src/dbrief_widget/ui", "dbrief_widget/ui"),
 ]
 binaries = []
 hiddenimports = [
-    # investment_widget's own subpackages (defensive; pathex below is what
+    # dbrief_widget's own subpackages (defensive; pathex below is what
     # actually lets PyInstaller find them on disk)
-    "investment_widget",
-    "investment_widget.bridge",
-    "investment_widget.data",
-    "investment_widget.presentation",
-    "investment_widget.services",
+    "dbrief_widget",
+    "dbrief_widget.bridge",
+    "dbrief_widget.data",
+    "dbrief_widget.presentation",
+    "dbrief_widget.services",
     # top-level module PyInstaller can only find via pathex
     "logging_conf",
     # utils.logging is loaded dynamically at runtime via the
@@ -43,10 +43,10 @@ for pkg in ("cherrypy", "cheroot"):
     hiddenimports += pkg_hidden
 
 a = Analysis(
-    ["dash-gui/main.py"],
+    ["widget/main.py"],
     pathex=[
-        os.path.join("dash-gui", "src"),   # -> investment_widget package
-        "dash-gui",                        # -> logging_conf.py
+        os.path.join("widget", "src"),     # -> dbrief_widget package
+        "widget",                          # -> logging_conf.py
         ".",                                # -> utils/ package at repo root
     ],
     binaries=binaries,
@@ -66,7 +66,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="Kel-dash",
+    name="DailyBrief",
     debug=False,
     strip=False,
     upx=False,
@@ -79,5 +79,5 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=False,
-    name="Kel-dash",
+    name="DailyBrief",
 )

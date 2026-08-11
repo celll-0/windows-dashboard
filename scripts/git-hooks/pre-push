@@ -1,8 +1,8 @@
 #!/bin/sh
 # scripts/git-hooks/pre-push
 #
-# Rebuilds Kel-dash.exe before allowing a push to refs/heads/master, but only
-# when the pushed commits actually touch dash-gui/ -- and a dash-gui/README
+# Rebuilds DailyBrief.exe before allowing a push to refs/heads/master, but only
+# when the pushed commits actually touch widget/ -- and a widget/README
 # change alone doesn't count. Aborts the push (non-zero exit) if the build
 # fails.
 #
@@ -33,7 +33,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
                 base="$remote_sha"
             fi
 
-            changed=$(git diff --name-only --diff-filter=ACMR "$base" "$local_sha" -- dash-gui)
+            changed=$(git diff --name-only --diff-filter=ACMR "$base" "$local_sha" -- widget)
             non_readme=$(printf '%s\n' "$changed" | grep -viE '(^|/)readme(\.[a-z0-9]+)?$')
 
             if [ -n "$non_readme" ]; then
@@ -49,14 +49,14 @@ if [ "$master_pushed" -ne 1 ]; then
 fi
 
 if [ "$gui_changed" -ne 1 ]; then
-    # master updated, but no dash-gui changes (or dash-gui README-only) -- skip the rebuild.
-    echo "pre-push: no non-README dash-gui changes -- skipping Kel-dash.exe rebuild."
+    # master updated, but no widget changes (or widget README-only) -- skip the rebuild.
+    echo "pre-push: no non-README widget changes -- skipping DailyBrief.exe rebuild."
     exit 0
 fi
 
 repo_root=$(git rev-parse --show-toplevel) || exit 1
 
-echo "pre-push: dash-gui changes detected on master -- rebuilding Kel-dash.exe first..."
+echo "pre-push: widget changes detected on master -- rebuilding DailyBrief.exe first..."
 
 (
     cd "$repo_root" || exit 1
@@ -65,7 +65,7 @@ echo "pre-push: dash-gui changes detected on master -- rebuilding Kel-dash.exe f
 build_status=$?
 
 if [ "$build_status" -ne 0 ]; then
-    echo "pre-push: Kel-dash.exe build FAILED (exit $build_status) -- push aborted." >&2
+    echo "pre-push: DailyBrief.exe build FAILED (exit $build_status) -- push aborted." >&2
     exit 1
 fi
 

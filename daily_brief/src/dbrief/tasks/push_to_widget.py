@@ -45,7 +45,7 @@ class PushToWidgetTask(Task):
         try:
             success = post(
                 self._widget_ingest_url(),
-                headers={"Authorization": f"Bearer {environ.get('KEL_GUI_API_TOKEN')}"},
+                headers={"Authorization": f"Bearer {environ.get('DAILYBRIEF_GUI_API_TOKEN')}"},
                 json={"type": self._caller.gui_type, "data": data},
                 timeout=5,
             )

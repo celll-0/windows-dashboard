@@ -1,2 +1,2 @@
-bin/kel-dash text eol=lf
-bin/kel-dash.cmd text eol=lf
+bin/dailybrief text eol=lf
+bin/dailybrief.cmd text eol=lf

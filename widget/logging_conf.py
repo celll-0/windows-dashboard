@@ -19,7 +19,7 @@ def load_logging_config(logging_config: Path) -> None:
         # sinks configured above go nowhere -- write to a file instead. This
         # only fires in the frozen build; dev runs are unaffected.
         logger.add(
-            LOG_DIR / "kel-dash.log",
+            LOG_DIR / "dailybrief.log",
             level="DEBUG",
             format="[{time:YYYY-MM-DD HH:mm:ss.SSS}] {level.name:<8} | {name}:{function}:{line} | {message}",
             rotation="5 MB",

@@ -50,7 +50,7 @@ if errorlevel 1 (
 REM Give the backend a moment to come up before the GUI's first fetch.
 "%PING_EXE%" -n 7 127.0.0.1 >nul
 
-REM Kel-dash.exe does not call load_dotenv() in production, so load .env
+REM DailyBrief.exe does not call load_dotenv() in production, so load .env
 REM into THIS process's environment -- the exe inherits it when launched.
 REM Keep this block AFTER the ping/Docker-wait section above: .env is
 REM user-writable, and a poisoned SystemRoot=/PING_EXE= line in it must not
@@ -62,15 +62,15 @@ if exist "%REPO_ROOT%.env" (
 )
 set "ENV=production"
 
-set "KEL_DASH_EXE=%REPO_ROOT%dist\Kel-dash\Kel-dash.exe"
-if not exist "%KEL_DASH_EXE%" (
-    echo Kel-dash.exe not found at "%KEL_DASH_EXE%". 1>&2
+set "DAILYBRIEF_EXE=%REPO_ROOT%dist\DailyBrief\DailyBrief.exe"
+if not exist "%DAILYBRIEF_EXE%" (
+    echo DailyBrief.exe not found at "%DAILYBRIEF_EXE%". 1>&2
     echo Build it first: powershell -File scripts\build-gui-exe.ps1 1>&2
     exit /b 1
 )
 
-echo Launching Kel-dash...
-start "" "%KEL_DASH_EXE%"
+echo Launching DailyBrief...
+start "" "%DAILYBRIEF_EXE%"
 
 endlocal
 exit /b 0

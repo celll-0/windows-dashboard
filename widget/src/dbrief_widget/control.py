@@ -27,8 +27,8 @@ class ControlServer(QObject):
         self._store = store
 
     def _check_token(self) -> bool:
-        token = cherrypy.request.headers.get("X-Kel-Dash-Token")
-        expected = os.getenv("KEL_DASH_CONTROL_TOKEN")
+        token = cherrypy.request.headers.get("X-DailyBrief-Token")
+        expected = os.getenv("DAILYBRIEF_CONTROL_TOKEN")
         if not expected or token != expected:
             logger.warning("Rejected control request with invalid/missing token")
             cherrypy.response.status = 401

@@ -89,7 +89,7 @@ class Application:
         if getattr(sys, "frozen", False):
             # Force production path resolution regardless of what this
             # process's own environment happened to inherit (e.g. a stray
-            # ENV=development from .env if launched via `kel-dash start`) --
+            # ENV=development from .env if launched via `dailybrief start`) --
             # a frozen relaunch must never resolve paths as if it were a dev
             # checkout. See ROOT_DIR in paths.py.
             env["ENV"] = "production"
