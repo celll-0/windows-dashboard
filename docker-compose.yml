@@ -2,8 +2,8 @@ services:
   dash_provider:
     build: .
     env_file:
-      - path: ./.env
-      - path: ./.env.prod
+      - path: .env
+      - path: .env.prod
     ports:
       - "${SERVICES_PORT:-8002}:${SERVICES_PORT:-8002}"
     extra_hosts:
