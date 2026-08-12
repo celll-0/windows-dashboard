@@ -19,11 +19,15 @@ CALLBACK_DELAY = 1
 # Timeout (s) to wait for the widget to be ready before pushing data
 WIDGET_READY_TIMEOUT: float = 20
 
+# News service
+INTEREST_STORY_FETCH_LIMIT = 10
+
 TIMEZONE = 'Europe/London' 
 
 ACTIVE_TASKS = (
     "FETCH_SUMMARY",
     "FETCH_PORTFOLIO_POSITIONS",
+    "FETCH_NEWS_FEED"
 )
 
 STORE_TABLES = [

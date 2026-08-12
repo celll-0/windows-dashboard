@@ -1,6 +1,7 @@
 from os import getenv
 from typing import Optional, Dict, Any, List, Union
 from datetime import datetime, timedelta
+from dbrief.constants import INTEREST_STORY_FETCH_LIMIT
 from pydantic import BaseModel, model_validator
 
 from loguru import logger
@@ -91,13 +92,23 @@ class GroundNewsService:
     
     def get_interest_feed_stories(self, interest_id: str) -> Dict[str, Any]:
         endpoint = URLs['GN'].endpoints.interest_feed
-        url = self._build_url(endpoint, id=interest_id)
+        url = self._build_url(
+            endpoint,
+            id=interest_id,
+            limit=INTEREST_STORY_FETCH_LIMIT,
+            offset=0
+        )
         return self._fetch(url).get("eventIds", {})
 
 
     def get_interest_top_stories(self, interest_id: str) -> Dict[str, Any]:
         endpoint = URLs['GN'].endpoints.interest_top_stories
-        url = self._build_url(endpoint, id=interest_id)
+        url = self._build_url(
+            endpoint, 
+            id=interest_id,
+            limit=INTEREST_STORY_FETCH_LIMIT,
+            offset=0
+        )
         return self._fetch(url).get("eventIds", {})
 
     
@@ -122,12 +133,16 @@ class GroundNewsService:
         return data
 
 
-    def _build_url(self, endpoint: str, **kwargs) -> str:
+    def _build_url(self, endpoint: str, id: str = "", **kwargs) -> str:
         url = f"{URLs['GN'].base_url}{endpoint}"
+        if id:
+            url = url.replace(":id", id)
         # fill placeholders denoted by :<key>
         for key, value in kwargs.items():
-            if f":{key}" in url:
-                url = url.replace(f":{key}", str(value))
+            if "?" in url:
+                url += f"&{key}={value}"
+            else:
+                url += f"?{key}={value}"    
         return url
 
 
