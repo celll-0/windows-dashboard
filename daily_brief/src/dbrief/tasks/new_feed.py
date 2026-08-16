@@ -32,18 +32,18 @@ class FetchNewsFeedTask(Task):
             feed = {}
             for interest in subscribed_interests:
                 story_ids = self.newsService.get_interest_top_stories(interest.id)
-                feed[interest.id] = self._get_story_list(story_ids)
+                feed[interest.id] = self._get_story_summaries(story_ids)
 
         if not any(feed.values()):
             logger.warning("No stories found for any subscribed interests.")
         logger.debug(f"Fetched news feed: {feed}")
-        self._data[self._store_in] = feed
+        self._data[self.store_key] = feed
             
 
-    def _get_story_list(self, story_ids: list[str]) -> list[dict]:
+    def _get_story_summaries(self, story_ids: list[str]) -> list[dict]:
         """Fetch a batch of stories with given ids"""
         stories = []
         for story_id in story_ids:
-            story = self.newsService.get_story(story_id)
+            story = self.newsService.get_event(story_id)
             stories.append(story)
         return stories

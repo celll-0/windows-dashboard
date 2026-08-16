@@ -89,6 +89,20 @@ class GroundNewsService:
 
         return self._fetch(url).get("event", {})
 
+
+    def get_story_summary(self, story_id: str) -> Dict[str, Any]:
+        endpoint = URLs['GN'].endpoints.summary
+        url = self._build_url(endpoint, id=story_id)
+
+        return self._fetch(url).get("event", {})
+
+
+    def get_event(self, story_id: str) -> Dict[str, Any]:
+        endpoint = URLs['GN'].endpoints.event
+        url = self._build_url(endpoint, id=story_id)
+
+        return self._fetch(url).get("event", {})
+
     
     def get_interest_feed_stories(self, interest_id: str) -> Dict[str, Any]:
         endpoint = URLs['GN'].endpoints.interest_feed
@@ -116,7 +130,6 @@ class GroundNewsService:
         endpoint = URLs['GN'].endpoints.subscribed_topics
         url = self._build_url(endpoint)
         res: list[Dict[str, Any]] = self._fetch(url)
-        logger.debug(f"Fetched subscribed topics: {res}")
         if res is None or len(res) == 0:
             logger.warning("No subscribed topics found.")
             return []

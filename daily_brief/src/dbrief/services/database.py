@@ -73,7 +73,7 @@ class JsonPersistenceClient:
         # add the timestamp for the updated table to the store before dumping to file
         store_file.seek(0)
         store_file.truncate(trunc_pos)
-        json.dump(store, store_file)
+        json.dump(store, store_file, indent=4)
 
 
     def _populate_fields_from_tuples(

@@ -92,10 +92,8 @@ TaskConfigs = {
     ),
 }
 
+
 # _______________ URL & ENDPOINT CONFIGURATIONS ________________
-
-
-
 URLs = {
     "T212": _(
         base_url="https://live.trading212.com/api/v0",
@@ -125,6 +123,8 @@ URLs = {
             interest_feed="/api/v06/story/feed/interest/:id/ids",
             interest_top_stories="/api/public/interest/:id/events/top",
             story="/api/v06/story/:id/web",
+            summary="/api/public/event/:id/summary",
+            event="/api/public/event/:id",
             login="/api/v04/user/login"
         )
     ),
