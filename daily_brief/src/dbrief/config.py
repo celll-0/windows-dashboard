@@ -69,9 +69,15 @@ TaskConfigs = {
     "FETCH_NEWS_FEED": _(
         name="fetch_news_feed",
         schedules=[
+            # Fetch feed on application start _____________
             _(
                 type="one_time",
                 execution_time=datetime.now() + timedelta(seconds=2)
+            ),
+            # Recurring schedules ____________________________
+            _(
+                type="interval",
+                interval=timedelta(hours=2)
             ),
         ],
         callback="push_to_widget",

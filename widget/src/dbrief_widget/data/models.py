@@ -91,7 +91,7 @@ class NewsItem:
             title=data["title"],
             description=data["description"],
             url=data["url"],
-            start=datetime.fromisoformat(data["start"]).strftime("%d %b, %H:%M:%S"),
+            start=datetime.fromisoformat(data["start"]).strftime("%d %b, %H:%M"),
             source_count=data.get("sourceCount", 0),
         )
 
@@ -99,19 +99,28 @@ class NewsItem:
 @dataclass(frozen=True)
 class NewsFeed:
     items: list[NewsItem]
+    last_updated: str
 
     @classmethod
     def from_dict(cls, data: dict) -> "NewsFeed":
-        """Parse the endpoint payload: interest-keyed lists of events. Sort
-        while ``start`` is still a raw ISO string (so it orders correctly
-        across day/month boundaries) before NewsItem.from_dict formats it
-        into the display string."""
-        events = [
-            (interest, event)
-            for interest, events in data.items()
-            for event in events
-        ]
-        events.sort(key=lambda pair: pair[1]["start"], reverse=True)
+        if not data or len(data.items()) <= 0:
+            raise ValueError("News feed payload is empty")
+
+        items: list[NewsItem] = []
+        for interest, events in data.items():
+            if "timestamp" in interest:
+                continue
+
+            if not isinstance(events, list):
+                raise ValueError(f"Expected list of events for {interest}, got {type(events)}")
+            items.extend(NewsItem.from_dict(interest, event) for event in events)
+
         return cls(
-            items=[NewsItem.from_dict(interest, event) for interest, event in events]
+            items=items,
+            last_updated=data.get('timestamp') or datetime.now().strftime("%d %b, %H:%M")
         )
+
+        
+    def sort_items(self) -> None:
+        """Sort the items in place by start time (descending)."""
+        self.items.sort(key=lambda item: item.start, reverse=True)

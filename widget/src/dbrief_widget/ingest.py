@@ -37,6 +37,7 @@ class IngestServer(QObject):
             "NewsFeed": self._handle_news_feed,
         }
 
+
     def _check_token(self) -> bool:
         auth = cherrypy.request.headers.get("Authorization", "")
         expected = os.getenv("DAILYBRIEF_GUI_API_TOKEN")
@@ -46,20 +47,24 @@ class IngestServer(QObject):
             return False
         return True
 
+
     def _handle_summary(self, data: Dict[str, Any]) -> Dict:
         summary = AccountSummary.from_dict(data)
         self.summaryRequestSucceeded.emit(summary)
         return {"success": True, "message": "Gui summary updated"}
+
 
     def _handle_positions(self, data: Dict[str, Any]) -> Dict:
         positions = OpenPositions.from_dict(data)
         self.positionsRequestSucceeded.emit(positions)
         return {"success": True, "message": "Gui positions updated"}
 
+
     def _handle_news_feed(self, data: Dict[str, Any]) -> Dict:
         news_feed = NewsFeed.from_dict(data)
         self.newsFeedRequestSucceeded.emit(news_feed)
         return {"success": True, "message": "Gui news feed updated"}
+
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -81,8 +86,9 @@ class IngestServer(QObject):
         try:
             return handler(payload.data)
         except Exception as e:
-            logger.error("Failed to process {} data: {}", payload.type, e)
+            logger.exception("Failed to process {} data:", payload.type, e)
             return {"success": False, "message": str(e)}
+
 
 class IngestServerThread(QThread):
     summaryReady = pyqtSignal(object)  # AccountSummary

@@ -84,6 +84,7 @@ class Application:
     def _on_news_feed(self, feed: NewsFeed) -> None:
         try:
             logger.info("News feed received | items={}", len(feed.items))
+            feed.sort_items()
             self._bridge.set_news_feed(build_news_feed_view_model(feed))
         except Exception as e:
             logger.error("Widget could not load news feed: {}", e)
