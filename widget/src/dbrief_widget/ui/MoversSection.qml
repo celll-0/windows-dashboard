@@ -24,6 +24,10 @@ ColumnLayout {
             color: expandArea.containsMouse ? "#ECEBE5" : "#9FA197"
             Layout.fillWidth: true
 
+            Behavior on color {
+                ColorAnimation { duration: animationDurationMs }
+            }
+
             MouseArea {
                 id: expandArea
                 anchors.fill: parent
@@ -39,6 +43,10 @@ ColumnLayout {
             text: section.showPrice ? "prc." : "val."
             font.pixelSize: 10
             color: priceArea.containsMouse ? "#ECEBE5" : "#9FA197"
+
+            Behavior on color {
+                ColorAnimation { duration: animationDurationMs }
+            }
 
             MouseArea {
                 id: priceArea
@@ -58,7 +66,7 @@ ColumnLayout {
         spacing: 0
 
         Behavior on Layout.preferredHeight {
-            NumberAnimation { duration: 120 }
+            NumberAnimation { duration: animationDurationMs }
         }
 
         Repeater {

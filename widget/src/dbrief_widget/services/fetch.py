@@ -16,7 +16,7 @@ from loguru import logger
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
 from ..constants import _PROVIDER_ENDPOINTS
-from ..data import AccountSummary, OpenPositions
+from ..data import AccountSummary, NewsFeed, OpenPositions
 from .api_client import ApiClient
 
 
@@ -28,9 +28,14 @@ def _parse_positions(data: dict) -> OpenPositions:
     return OpenPositions.from_dict(data["positions"])
 
 
+def _parse_news_feed(data: dict) -> NewsFeed:
+    return NewsFeed.from_dict(data["news_feed"])
+
+
 _DATAPOINTS: dict[str, tuple[str, Callable[[dict], object]]] = {
     "summary": (_PROVIDER_ENDPOINTS.investments.summary, _parse_summary),
     "positions": (_PROVIDER_ENDPOINTS.investments.positions, _parse_positions),
+    "news_feed": (_PROVIDER_ENDPOINTS.news.feed, _parse_news_feed),
 }
 
 

@@ -38,6 +38,12 @@ class DailyBriefServer(object):
         investments_data = self._data_client.get_from_table('investments')
         return {"positions": investments_data.get("positions", {})}
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def news_feed(self):
+        news_feed_data = self._data_client.get_from_table('news')
+        return {"news_feed": news_feed_data.get("feed", {})}
+
 
     
     def __init__(self):

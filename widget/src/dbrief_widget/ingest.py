@@ -5,7 +5,12 @@ from typing import Any, Dict
 
 from pydantic import BaseModel, ValidationError
 
-from .data import AccountSummary, OpenPositions, SnapshotStore
+from .data import (
+    AccountSummary,
+    OpenPositions,
+    SnapshotStore,
+    NewsFeed,
+)
 from .control import ControlServer
 from .constants import DEFAULT_PORT
 
@@ -22,12 +27,14 @@ class UpdatePayload(BaseModel):
 class IngestServer(QObject):
     summaryRequestSucceeded = pyqtSignal(object)  # AccountSummary
     positionsRequestSucceeded = pyqtSignal(object)  # OpenPositions
+    newsFeedRequestSucceeded = pyqtSignal(object)  # NewsFeed
 
     def __init__(self) -> None:
         super().__init__()
         self._handlers = {
             "AccountSummary": self._handle_summary,
             "OpenPositions": self._handle_positions,
+            "NewsFeed": self._handle_news_feed,
         }
 
     def _check_token(self) -> bool:
@@ -48,6 +55,11 @@ class IngestServer(QObject):
         positions = OpenPositions.from_dict(data)
         self.positionsRequestSucceeded.emit(positions)
         return {"success": True, "message": "Gui positions updated"}
+
+    def _handle_news_feed(self, data: Dict[str, Any]) -> Dict:
+        news_feed = NewsFeed.from_dict(data)
+        self.newsFeedRequestSucceeded.emit(news_feed)
+        return {"success": True, "message": "Gui news feed updated"}
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -75,6 +87,7 @@ class IngestServer(QObject):
 class IngestServerThread(QThread):
     summaryReady = pyqtSignal(object)  # AccountSummary
     positionsReady = pyqtSignal(object)  # OpenPositions
+    newsFeedReady = pyqtSignal(object)  # NewsFeed
     stopRequested = pyqtSignal()
     restartRequested = pyqtSignal()
     refreshRequested = pyqtSignal()
@@ -85,6 +98,7 @@ class IngestServerThread(QThread):
         self._server = IngestServer()
         self._server.summaryRequestSucceeded.connect(self.summaryReady)
         self._server.positionsRequestSucceeded.connect(self.positionsReady)
+        self._server.newsFeedRequestSucceeded.connect(self.newsFeedReady)
         self._control = ControlServer(store)
         self._control.stopRequested.connect(self.stopRequested)
         self._control.restartRequested.connect(self.restartRequested)

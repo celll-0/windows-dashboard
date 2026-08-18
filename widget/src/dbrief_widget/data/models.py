@@ -71,3 +71,47 @@ class OpenPositions:
             ],
             timestamp=datetime.fromisoformat(data["timestamp"]),
         )
+
+
+@dataclass(frozen=True)
+class NewsItem:
+    id: str
+    category: str
+    title: str
+    description: str
+    url: str
+    start: str
+    source_count: int
+
+    @classmethod
+    def from_dict(cls, category: str, data: dict) -> "NewsItem":
+        return cls(
+            id=data["id"],
+            category=category,
+            title=data["title"],
+            description=data["description"],
+            url=data["url"],
+            start=datetime.fromisoformat(data["start"]).strftime("%d %b, %H:%M:%S"),
+            source_count=data.get("sourceCount", 0),
+        )
+
+
+@dataclass(frozen=True)
+class NewsFeed:
+    items: list[NewsItem]
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "NewsFeed":
+        """Parse the endpoint payload: interest-keyed lists of events. Sort
+        while ``start`` is still a raw ISO string (so it orders correctly
+        across day/month boundaries) before NewsItem.from_dict formats it
+        into the display string."""
+        events = [
+            (interest, event)
+            for interest, events in data.items()
+            for event in events
+        ]
+        events.sort(key=lambda pair: pair[1]["start"], reverse=True)
+        return cls(
+            items=[NewsItem.from_dict(interest, event) for interest, event in events]
+        )

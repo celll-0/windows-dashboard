@@ -50,7 +50,7 @@ class PushToWidgetTask(Task):
                 timeout=5,
             )
             if success:
-                logger.success("Data pushed to dash gui successfully!")
+                logger.success("Data '{}' pushed to dash gui successfully!", self._caller.store_key)
             else:
                 raise RuntimeError("Failed to push data to the widget.")
         except Exception as e:

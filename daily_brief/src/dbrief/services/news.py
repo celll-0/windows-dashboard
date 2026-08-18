@@ -79,16 +79,36 @@ class Interest(BaseModel):
     youFollow: bool
     youSubToPns: bool
 
+
+class Event(BaseModel):
+    id: str
+    type: str
+    title: str
+    description: str
+    url: str
+    start: str
+    sourceCount: int
+
+
 class GroundNewsService:
     _session: Optional[Session] = None
 
 
-    def get_story(self, story_id: str) -> Dict[str, Any]:
+    def get_story(self, story_id: str) -> Event:
         endpoint = URLs['GN'].endpoints.story
         url = self._build_url(endpoint, id=story_id)
+        story = self._fetch(url).get("event", {})
 
-        return self._fetch(url).get("event", {})
-
+        return Event(
+            id= story.get("id"),
+            type= story.get("type"),
+            title= story.get("title"),
+            start= story.get("start"),
+            description= story.get("description"),
+            url= story.get("shareUrl"),
+            sourceCount= int(story.get("sourceCount"))
+        )
+        
 
     def get_story_summary(self, story_id: str) -> Dict[str, Any]:
         endpoint = URLs['GN'].endpoints.summary
@@ -97,13 +117,6 @@ class GroundNewsService:
         return self._fetch(url).get("event", {})
 
 
-    def get_event(self, story_id: str) -> Dict[str, Any]:
-        endpoint = URLs['GN'].endpoints.event
-        url = self._build_url(endpoint, id=story_id)
-
-        return self._fetch(url).get("event", {})
-
-    
     def get_interest_feed_stories(self, interest_id: str) -> Dict[str, Any]:
         endpoint = URLs['GN'].endpoints.interest_feed
         url = self._build_url(
@@ -115,7 +128,7 @@ class GroundNewsService:
         return self._fetch(url).get("eventIds", {})
 
 
-    def get_interest_top_stories(self, interest_id: str) -> Dict[str, Any]:
+    def get_interest_top_stories(self, interest_id: str) -> list[str]:
         endpoint = URLs['GN'].endpoints.interest_top_stories
         url = self._build_url(
             endpoint, 
@@ -123,12 +136,12 @@ class GroundNewsService:
             limit=INTEREST_STORY_FETCH_LIMIT,
             offset=0
         )
-        return self._fetch(url).get("eventIds", {})
+        return self._fetch(url).get("eventIds", [])
 
     
     def get_subscribed(self) -> list[Interest]:
         endpoint = URLs['GN'].endpoints.subscribed_topics
-        url = self._build_url(endpoint)
+        url = self._build_url(endpoint, sort="time")
         res: list[Dict[str, Any]] = self._fetch(url)
         if res is None or len(res) == 0:
             logger.warning("No subscribed topics found.")

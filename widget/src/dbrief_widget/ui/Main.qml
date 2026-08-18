@@ -24,6 +24,7 @@ Window {
     // The single binding surface to Python. Re-evaluates on modelChanged.
     property var m: bridge.model
     property var positionsList: bridge.positions
+    property var newsFeedList: bridge.newsFeed
 
     ColumnLayout {
         id: root
@@ -120,6 +121,13 @@ Window {
             Layout.fillWidth: true
             Layout.topMargin: 4
             positions: positionsList
+        }
+
+        // ---- News feed -------------------------------------------------
+        NewsFeedSection {
+            Layout.fillWidth: true
+            Layout.topMargin: 4
+            items: newsFeedList
         }
     }
 }

@@ -8,33 +8,33 @@ TaskConfigs = {
     "FETCH_SUMMARY": _(
         name="fetch_investment_summary",
         schedules=[
-            # # Fetch summary on application start _____________
-            # _(
-            #     type="one_time",
-            #     execution_time=datetime.now() + timedelta(seconds=1)
-            # ),
+            # Fetch summary on application start _____________
+            _(
+                type="one_time",
+                execution_time=datetime.now() + timedelta(seconds=1)
+            ),
 
-            # # Recurring schedules ____________________________
-            # _( # Just before LDN market open
-            #     type="recurring_time",
-            #     time=time(hour=7, minute=30, second=0)
-            # ),
-            # _( # Just after LDN market open
-            #     type="recurring_time",
-            #     time=time(hour=8, minute=30, second=0)
-            # ),
-            # _( # LDN market close
-            #     type="recurring_time",
-            #     time=time(hour=16, minute=30, second=0)
-            # ),
-            # _( # NY market open
-            #     type="recurring_time",
-            #     time=time(hour=14, minute=0, second=0)
-            # ),
-            # _( # NY market close
-            #     type="recurring_time",
-            #     time=time(hour=21, minute=30, second=0)
-            # ),
+            # Recurring schedules ____________________________
+            _( # Just before LDN market open
+                type="recurring_time",
+                time=time(hour=7, minute=30, second=0)
+            ),
+            _( # Just after LDN market open
+                type="recurring_time",
+                time=time(hour=8, minute=30, second=0)
+            ),
+            _( # LDN market close
+                type="recurring_time",
+                time=time(hour=16, minute=30, second=0)
+            ),
+            _( # NY market open
+                type="recurring_time",
+                time=time(hour=14, minute=0, second=0)
+            ),
+            _( # NY market close
+                type="recurring_time",
+                time=time(hour=21, minute=30, second=0)
+            ),
         ],
         callback="push_to_widget",
         store_in="investments.summary",
@@ -43,24 +43,24 @@ TaskConfigs = {
     "FETCH_PORTFOLIO_POSITIONS": _(
         name="fetch_portfolio_positions",
         schedules=[
-            # # Fetch summary on application start _____________
-            # _(
-            #     type="one_time",
-            #     execution_time=datetime.now() + timedelta(seconds=1)
-            # ),
-            # # Recurring schedules ____________________________
-            # _( # Just after LDN market open
-            #     type="recurring_time",
-            #     time=time(hour=8, minute=30, second=0)
-            # ),
-            # _( # LDN market close
-            #     type="recurring_time",
-            #     time=time(hour=16, minute=30, second=0)
-            # ),
-            # _( # NY market close
-            #     type="recurring_time",
-            #     time=time(hour=21, minute=30, second=0)
-            # ),
+            # Fetch summary on application start _____________
+            _(
+                type="one_time",
+                execution_time=datetime.now() + timedelta(seconds=1)
+            ),
+            # Recurring schedules ____________________________
+            _( # Just after LDN market open
+                type="recurring_time",
+                time=time(hour=8, minute=30, second=0)
+            ),
+            _( # LDN market close
+                type="recurring_time",
+                time=time(hour=16, minute=30, second=0)
+            ),
+            _( # NY market close
+                type="recurring_time",
+                time=time(hour=21, minute=30, second=0)
+            ),
         ],
         callback="push_to_widget",
         store_in="investments.positions",
@@ -74,7 +74,7 @@ TaskConfigs = {
                 execution_time=datetime.now() + timedelta(seconds=2)
             ),
         ],
-        callback=None,
+        callback="push_to_widget",
         store_in="news.feed",
         data_type="NewsFeed"
     ),
@@ -124,7 +124,6 @@ URLs = {
             interest_top_stories="/api/public/interest/:id/events/top",
             story="/api/v06/story/:id/web",
             summary="/api/public/event/:id/summary",
-            event="/api/public/event/:id",
             login="/api/v04/user/login"
         )
     ),

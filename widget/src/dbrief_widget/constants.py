@@ -23,7 +23,18 @@ _PROVIDER_ENDPOINTS = _(
         summary="/summary",
         positions="/positions",
     ),
+    news=_(
+        feed="/news_feed",
+    ),
 )
 
 DEFAULT_PORT = getenv("DEFAULT_GUI_PORT", 8001)
 DEFAULT_SERVICES_PORT = getenv("DEFAULT_SERVICES_PORT", 8002)
+
+DESCRIPTION_LIMIT = 140
+
+# Single duration for every QML transition/behaviour (hover tints, collapse
+# animations, etc.) -- exposed to QML as a root-context property (see
+# app.py) so all UI motion stays smooth and consistent, not just individual
+# components that happen to import the same value.
+ANIMATION_DURATION_MS = 120
