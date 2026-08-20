@@ -76,7 +76,6 @@ class OpenPositions:
 @dataclass(frozen=True)
 class NewsItem:
     id: str
-    category: str
     title: str
     description: str
     url: str
@@ -84,10 +83,9 @@ class NewsItem:
     source_count: int
 
     @classmethod
-    def from_dict(cls, category: str, data: dict) -> "NewsItem":
+    def from_dict(cls, data: dict) -> "NewsItem":
         return cls(
             id=data["id"],
-            category=category,
             title=data["title"],
             description=data["description"],
             url=data["url"],
@@ -103,23 +101,15 @@ class NewsFeed:
 
     @classmethod
     def from_dict(cls, data: dict) -> "NewsFeed":
-        if not data or len(data.items()) <= 0:
-            raise ValueError("News feed payload is empty")
-
-        items: list[NewsItem] = []
-        for interest, events in data.items():
-            if "timestamp" in interest:
-                continue
-
-            if not isinstance(events, list):
-                raise ValueError(f"Expected list of events for {interest}, got {type(events)}")
-            items.extend(NewsItem.from_dict(interest, event) for event in events)
-
+        events: list[dict] = data.get("events", [])
+        if not events:
+            raise ValueError(f"Events list is empty")
+        
+        items = [NewsItem.from_dict(event) for event in events]
         return cls(
             items=items,
             last_updated=data.get('timestamp') or datetime.now().strftime("%d %b, %H:%M")
         )
-
         
     def sort_items(self) -> None:
         """Sort the items in place by start time (descending)."""

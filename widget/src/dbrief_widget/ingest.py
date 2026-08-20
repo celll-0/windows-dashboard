@@ -61,6 +61,8 @@ class IngestServer(QObject):
 
 
     def _handle_news_feed(self, data: Dict[str, Any]) -> Dict:
+        if not data or len(data.items()) <= 0:
+            raise ValueError("News feed payload is empty")
         news_feed = NewsFeed.from_dict(data)
         self.newsFeedRequestSucceeded.emit(news_feed)
         return {"success": True, "message": "Gui news feed updated"}

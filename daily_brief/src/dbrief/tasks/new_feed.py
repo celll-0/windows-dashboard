@@ -32,21 +32,26 @@ class FetchNewsFeedTask(Task):
         
         subscribed_interests = self.newsService.get_subscribed()
         if subscribed_interests:
-            logger.info(f"Fetching news for subscribed interests:\n{'\n'.join([f'- {interest.name}' for interest in subscribed_interests])}")
-            feed = {}
-            for interest in subscribed_interests:
-                story_ids = self.newsService.get_interest_top_stories(interest.id)
-                feed[interest.name] = self._get_feed_events(story_ids)
+            logger.info(
+                "Fetching news for subscribed interests:\n{}",
+                '\n'.join([f'- {interest.name}' for interest in subscribed_interests])
+            )
 
-            if not any(feed.values()):
-                logger.warning("No stories found for any subscribed interests.")
-            self._data[self.store_key] = feed
+            events = set()
+            for interest in subscribed_interests:
+                events.update(self.newsService.get_interest_top_stories(interest.id))
+
+            if not events:
+                logger.warning("No events found for any subscribed interests.")
+            self._data[self.store_key] = {"events": [
+                event.model_dump(mode='python')
+                for event in self._get_feed_events(events)
+            ]}
             
 
-    def _get_feed_events(self, story_ids: list[str]) -> list[Event]:
+    def _get_feed_events(self, story_ids: set[str]) -> list[Event]:
         """Fetch a batch of stories with given ids"""
-        stories = []
-        for story_id in story_ids:
-            story = self.newsService.get_story(story_id)
-            stories.append(story.model_dump(mode="python"))
-        return stories
+        return [
+            self.newsService.get_story(story_id)
+            for story_id in story_ids
+        ]
